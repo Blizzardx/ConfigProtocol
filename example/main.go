@@ -30,7 +30,5 @@ func main() {
 	var exportList []*exportTool.ExportTarget
 	exportList = append(exportList, &exportTool.ExportTarget{Name: "server", Lan: define.SupportLan_Go})
 	err := exportTool.ExportFile("config/BasicItem_Common.xlsx", "output", exportList, ".bytes")
-	if nil != err {
-		fmt.Println(err)
-	}
+	fmt.Println(err)
 }

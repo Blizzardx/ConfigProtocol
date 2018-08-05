@@ -34,9 +34,11 @@ func (self *genRuntimeCodeTool_Go) GenRuntimeCode(outputPath string, provision *
 	if err != nil {
 		return err
 	}
-	common.WriteFileByName(outputPath+"/Go/"+provision.ConfigName+".go", []byte(content))
+	common.EnsureFolder(outputPath + "/Go/")
 
-	return nil
+	err = common.WriteFileByName(outputPath+"/Go/"+provision.ConfigName+".go", []byte(content))
+
+	return err
 }
 func (self *genRuntimeCodeTool_Go) Name() define.SupportLan {
 	return define.SupportLan_Go

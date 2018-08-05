@@ -43,13 +43,14 @@ func ExportFile(filePath string, outputPath string, exportTargetList []*ExportTa
 	if err != nil {
 		return err
 	}
-
 	// begin check provision
-	if nil != checkConfigProvisionCorrect(provision) {
+	err = checkConfigProvisionCorrect(provision)
+	if err != nil {
 		return err
 	}
 	// begin check content
-	if nil != checkConfigContentCorrect(provision, content) {
+	err = checkConfigContentCorrect(provision, content)
+	if nil != err {
 		return err
 	}
 
@@ -166,6 +167,7 @@ func checkFieldTypeCorrect(fieldTypeStr string, content string, minValue string,
 		if nil != err {
 			return err
 		}
+		return nil
 	case config.FieldType_typeInt64:
 		var tmpValue int64 = 0
 		err := common.Parser_int64(content, &tmpValue)
@@ -176,6 +178,7 @@ func checkFieldTypeCorrect(fieldTypeStr string, content string, minValue string,
 		if nil != err {
 			return err
 		}
+		return nil
 	case config.FieldType_typeFloat32:
 		var tmpValue float32 = 0
 		err := common.Parser_float32(content, &tmpValue)
@@ -186,6 +189,7 @@ func checkFieldTypeCorrect(fieldTypeStr string, content string, minValue string,
 		if nil != err {
 			return err
 		}
+		return nil
 	case config.FieldType_typeFloat64:
 		var tmpValue float64 = 0
 		err := common.Parser_float64(content, &tmpValue)
@@ -196,18 +200,21 @@ func checkFieldTypeCorrect(fieldTypeStr string, content string, minValue string,
 		if nil != err {
 			return err
 		}
+		return nil
 	case config.FieldType_typeBool:
 		var tmpValue bool = false
 		err := common.Parser_bool(content, &tmpValue)
 		if nil != err {
 			return err
 		}
+		return nil
 	case config.FieldType_typeString:
 		var tmpValue string = ""
 		err := common.Parser_string(content, &tmpValue)
 		if nil != err {
 			return err
 		}
+		return nil
 	}
 	return errors.New("unknown field type " + fieldTypeStr)
 }
