@@ -2,11 +2,11 @@ package goRuntime
 
 import (
 	"errors"
-	"fmt"
 	"github.com/Blizzardx/ConfigProtocol/common"
 	"github.com/Blizzardx/ConfigProtocol/pbConfig"
 	"github.com/gogo/protobuf/proto"
 	"reflect"
+	"strings"
 )
 
 var workspace = ""
@@ -40,23 +40,24 @@ func LoadConfig(configStruct interface{}) error {
 	if fieldNum != 1 {
 		return errors.New("error type")
 	}
+	configInstance := reflect.ValueOf(configStruct)
+
 	// check type
 	if pbConfig.Type == config.ConfigType_typeList {
 		if tableFieldInfo.Type.Kind() != reflect.Slice {
 			return errors.New("error type")
 		}
-		parserList(configType, pbConfig)
+		parserList(configInstance, configType, pbConfig)
 	} else {
 		if tableFieldInfo.Type.Kind() != reflect.Map {
 			return errors.New("error type")
 		}
-		parserMap(configType, pbConfig)
+		parserMap(configInstance, configType, pbConfig)
 	}
 
 	return nil
 }
-func parserList(tableType reflect.Type, pbConfig *config.ConfigTable) {
-	configInstance := reflect.New(tableType)
+func parserList(configInstance reflect.Value, tableType reflect.Type, pbConfig *config.ConfigTable) reflect.Value {
 	configContentInstance := reflect.New(tableType.Field(0).Type)
 	configInstance.Field(0).Set(configContentInstance)
 
@@ -64,39 +65,85 @@ func parserList(tableType reflect.Type, pbConfig *config.ConfigTable) {
 	for _, rowContent := range pbConfig.Content {
 		lineContentInstance := reflect.New(lineDefineField)
 		for colIndex, cell := range rowContent.Content {
-			var definedFiledInfo reflect.StructField
-			isExist := false
-			// read pb field info
-			fieldInfo := pbConfig.FieldInfoList[colIndex]
-			for i := 0; i < lineDefineField.NumField(); i++ {
-				if lineDefineField.Field(i).Name == fieldInfo.Name {
-					isExist = true
-					definedFiledInfo = lineDefineField.Field(i)
-					break
-				}
-			}
-			if !isExist {
-				continue
-			}
-			// check type
-			if !checkType(definedFiledInfo.Type.Kind(), fieldInfo.Type) {
-				continue
-			}
-			cellInstance := reflect.New(definedFiledInfo.Type)
-			cellValue, err := parserCell(cell, fieldInfo.Type)
-			if err != nil {
-				//return err
-				continue
-			}
-			cellInstance.Set(reflect.ValueOf(cellValue))
-
-			lineContentInstance.FieldByName(definedFiledInfo.Name).Set(cellInstance)
+			parserLine(colIndex, pbConfig, lineDefineField, cell, lineContentInstance)
 		}
 		configContentInstance = reflect.Append(configContentInstance, lineContentInstance)
 	}
+	return configInstance
 }
-func parserMap(tableType reflect.Type, pbConfig *config.ConfigTable) {
+func parserMap(configInstance reflect.Value, tableType reflect.Type, pbConfig *config.ConfigTable) reflect.Value {
+	configContentInstance := reflect.New(tableType.Field(0).Type)
+	configInstance.Field(0).Set(configContentInstance)
 
+	lineDefineField := tableType.Field(0).Type.Elem().Elem()
+	for _, rowContent := range pbConfig.Content {
+		lineContentInstance := reflect.New(lineDefineField)
+		var thisLineKeyValue reflect.Value
+		for colIndex, cell := range rowContent.Content {
+			isKey, keyValue := parserLine(colIndex, pbConfig, lineDefineField, cell, lineContentInstance)
+			if isKey {
+				thisLineKeyValue = keyValue
+			}
+		}
+		tmpKey := configContentInstance.MapIndex(thisLineKeyValue)
+		if !tmpKey.IsValid() {
+			// error
+			continue
+		}
+		configContentInstance.SetMapIndex(thisLineKeyValue, lineContentInstance)
+	}
+	return configInstance
+}
+func parserLine(colIndex int, pbConfig *config.ConfigTable, lineDefineField reflect.Type, cell string, lineContentInstance reflect.Value) (isKey bool, keyValue reflect.Value) {
+	isKey = false
+
+	var definedFiledInfo reflect.StructField
+	isExist := false
+	// read pb field info
+	fieldInfo := pbConfig.FieldInfoList[colIndex]
+	for i := 0; i < lineDefineField.NumField(); i++ {
+		if lineDefineField.Field(i).Name == fieldInfo.Name {
+			isExist = true
+			definedFiledInfo = lineDefineField.Field(i)
+			break
+		}
+	}
+	if !isExist {
+		return
+	}
+	if fieldInfo.IsList {
+		if definedFiledInfo.Type.Kind() != reflect.Slice {
+			return
+		}
+		listInstance := reflect.New(definedFiledInfo.Type)
+		cellList := strings.Split(cell, "|")
+		for _, tmpCell := range cellList {
+
+			cellValue, err := parserCell(tmpCell, fieldInfo.Type)
+			if err != nil {
+				continue
+			}
+			listInstance = reflect.Append(listInstance, reflect.ValueOf(cellValue))
+		}
+		lineContentInstance.FieldByName(definedFiledInfo.Name).Set(listInstance)
+	} else {
+		// check type
+		if !checkType(definedFiledInfo.Type.Kind(), fieldInfo.Type) {
+			return
+		}
+		cellValue, err := parserCell(cell, fieldInfo.Type)
+		if err != nil {
+			//return err
+			return
+		}
+		lineContentInstance.FieldByName(definedFiledInfo.Name).Set(reflect.ValueOf(cellValue))
+	}
+
+	if fieldInfo.Name == pbConfig.KeyFieldName {
+		keyValue = lineContentInstance.FieldByName(definedFiledInfo.Name)
+		isKey = true
+	}
+	return
 }
 func parserCell(cell string, pbType config.FieldType) (interface{}, error) {
 	switch pbType {
