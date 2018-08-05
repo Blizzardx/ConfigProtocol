@@ -16,7 +16,20 @@ type ExportTarget struct {
 	Lan  define.SupportLan
 }
 
-func exportFile(filePath string, outputPath string, exportTargetList []*ExportTarget, outputFileSuffix string) error {
+type ConfigRunTimeCodeGenerator interface {
+	GenRuntimeCode(outputPath string, provision *ConfigDefine) error
+	Name() define.SupportLan
+}
+
+var codeGenToolStore = map[define.SupportLan]ConfigRunTimeCodeGenerator{}
+
+func init() {
+	// register
+	codeGenToolStore[define.SupportLan_Go] = &genRuntimeCodeTool_Go{}
+	codeGenToolStore[define.SupportLan_Csharp] = &genRuntimeCodeTool_Csharp{}
+	codeGenToolStore[define.SupportLan_Java] = &genRuntimeCodeTool_Java{}
+}
+func ExportFile(filePath string, outputPath string, exportTargetList []*ExportTarget, outputFileSuffix string) error {
 	// parser file name
 	fileName, _ := common.ParserFileNameByPath(filePath)
 
@@ -42,7 +55,10 @@ func exportFile(filePath string, outputPath string, exportTargetList []*ExportTa
 
 	// begin export
 	for _, exportTarget := range exportTargetList {
-		tmpConfig := doExport(provision, content, exportTarget)
+		tmpConfig, err := doExport(outputPath, provision, content, exportTarget)
+		if err != nil {
+			return errors.New("error on export config at target " + exportTarget.Name + " " + err.Error())
+		}
 		byteContent, err := proto.Marshal(tmpConfig)
 
 		if err != nil {
@@ -231,7 +247,7 @@ func convertStrToFieldType(fileType string) (config.FieldType, error) {
 		return config.FieldType_typeInt32, errors.New("unknown field type " + fileType)
 	}
 }
-func doExport(provision *define.ConfigInfo, content [][]string, exportTarget *ExportTarget) *config.ConfigTable {
+func doExport(outputPath string, provision *define.ConfigInfo, content [][]string, exportTarget *ExportTarget) (*config.ConfigTable, error) {
 	pbConfig := &config.ConfigTable{}
 
 	if provision.GlobalInfo.TableType == "list" {
@@ -270,5 +286,17 @@ func doExport(provision *define.ConfigInfo, content [][]string, exportTarget *Ex
 		}
 		pbConfig.Content = append(pbConfig.Content, configLine)
 	}
-	return pbConfig
+	define := &ConfigDefine{PackageName: "config", ConfigName: provision.TableName}
+	for index, field := range provision.LineInfo {
+		if _, ok := ignoreColIndex[index]; ok {
+			continue
+		}
+		define.FieldList = append(define.FieldList, &ConfigFieldDefine{Name: field.FieldName, Type: field.FieldType, IsList: field.IsList})
+	}
+	// gen runtime code
+	err := codeGenToolStore[exportTarget.Lan].GenRuntimeCode(outputPath, define)
+	if nil != err {
+		return nil, err
+	}
+	return pbConfig, nil
 }
