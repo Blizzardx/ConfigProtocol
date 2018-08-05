@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/360EntSecGroup-Skylar/excelize"
 	"github.com/Blizzardx/ConfigProtocol/define"
-	"strings"
 )
 
 func ReadExcelFile(filePath string) ([][]string, error) {
