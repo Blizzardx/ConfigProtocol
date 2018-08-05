@@ -1,12 +1,12 @@
 package excelHandler
 
 import (
-	"github.com/360EntSecGroup-Skylar/excelize"
-	"fmt"
-	"errors"
-	"strings"
-	"github.com/Blizzardx/ConfigProtocol/define"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"github.com/360EntSecGroup-Skylar/excelize"
+	"github.com/Blizzardx/ConfigProtocol/define"
+	"strings"
 )
 
 func ReadExcelFile(filePath string) ([][]string, error) {
@@ -31,7 +31,6 @@ func ParserExcelToConfigProvision(content [][]string, fileName string) (*define.
 		return nil, errors.New("content error ")
 	}
 	// parser package name
-	fileName = strings.Split(fileName, ".")[0]
 	provision := &define.ConfigInfo{TableName: fileName}
 	// global define at [0][0] pos
 	if len(content[0]) < 1 {

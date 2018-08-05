@@ -41,7 +41,7 @@ message ConfigTable{
     string  keyFieldName = 2;
     repeated ConfigFieldInfo fieldInfoList = 3;
     repeated ConfigEnumInfo enumInfoList = 4;
-    ConfigLine content = 5;
+    repeated ConfigLine content = 5;
 }
 	
 

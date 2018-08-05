@@ -6,6 +6,7 @@ import (
 	"github.com/Blizzardx/ConfigProtocol/define"
 	"github.com/Blizzardx/ConfigProtocol/excelHandler"
 	"github.com/Blizzardx/ConfigProtocol/pbConfig"
+	"github.com/gogo/protobuf/proto"
 	"strconv"
 	"strings"
 )
@@ -15,14 +16,17 @@ type ExportTarget struct {
 	Lan  define.SupportLan
 }
 
-func exportFile(filePath string, outputPath string, exportTargetList []*ExportTarget) error {
+func exportFile(filePath string, outputPath string, exportTargetList []*ExportTarget, outputFileSuffix string) error {
+	// parser file name
+	fileName, _ := common.ParserFileNameByPath(filePath)
+
 	// load excel file
 	content, err := excelHandler.ReadExcelFile(filePath)
 	if err != nil {
 		return err
 	}
 	// parser file header
-	provision, err := excelHandler.ParserExcelToConfigProvision(content, filePath)
+	provision, err := excelHandler.ParserExcelToConfigProvision(content, fileName)
 	if err != nil {
 		return err
 	}
@@ -38,7 +42,18 @@ func exportFile(filePath string, outputPath string, exportTargetList []*ExportTa
 
 	// begin export
 	for _, exportTarget := range exportTargetList {
-		doExport(provision, content, exportTarget)
+		tmpConfig := doExport(provision, content, exportTarget)
+		byteContent, err := proto.Marshal(tmpConfig)
+
+		if err != nil {
+			return errors.New("error on export config at target " + exportTarget.Name + " " + err.Error())
+		}
+
+		// ensure output path
+		common.EnsureFolder(outputPath)
+
+		// do export
+		common.WriteFileByName(outputPath+"/"+provision.TableName+outputFileSuffix, byteContent)
 	}
 	return nil
 }
@@ -180,6 +195,22 @@ func checkFieldTypeCorrect(fieldTypeStr string, content string, minValue string,
 	}
 	return errors.New("unknown field type " + fieldTypeStr)
 }
+func checkExportTarget(exportTarget *ExportTarget, fieldTarget string) bool {
+	if fieldTarget == "" {
+		return true
+	}
+	// parser field target
+	targetList := strings.Split(fieldTarget, "|")
+	if len(targetList) == 0 {
+		return true
+	}
+	for _, target := range targetList {
+		if target == exportTarget.Name {
+			return true
+		}
+	}
+	return false
+}
 func convertStrToFieldType(fileType string) (config.FieldType, error) {
 	switch fileType {
 	case "int32":
@@ -211,15 +242,33 @@ func doExport(provision *define.ConfigInfo, content [][]string, exportTarget *Ex
 		pbConfig.KeyFieldName = provision.GlobalInfo.TableKeyFieldName
 	}
 
-	for _, field := range provision.LineInfo {
+	var ignoreColIndex = map[int]int{}
+	for index, field := range provision.LineInfo {
+		if field.FieldName == "" && field.FieldType == "" {
+			//
+			ignoreColIndex[index] = 1
+			continue
+		}
+		if !checkExportTarget(exportTarget, field.ExportTarget) {
+			//
+			ignoreColIndex[index] = 1
+			continue
+		}
 		fieldType, _ := convertStrToFieldType(field.FieldType)
 
 		pbConfig.FieldInfoList = append(pbConfig.FieldInfoList, &config.ConfigFieldInfo{Name: field.FieldName, Type: fieldType, IsList: field.IsList})
 	}
-	//fixedContent := excelHandler.FixExcelFile(content)
-	//for rowIndex, rowContent := range fixedContent {
-	//	for colIndex, contentCell := range rowContent {
-	//	}
-	//}
+	fixedContent := excelHandler.FixExcelFile(content)
+	for _, rowContent := range fixedContent {
+		configLine := &config.ConfigLine{}
+		for colIndex, contentCell := range rowContent {
+			// check colIndex is in ignore list
+			if _, ok := ignoreColIndex[colIndex]; ok {
+				continue
+			}
+			configLine.Content = append(configLine.Content, contentCell)
+		}
+		pbConfig.Content = append(pbConfig.Content, configLine)
+	}
 	return pbConfig
 }
