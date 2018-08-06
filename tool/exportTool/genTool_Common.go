@@ -10,14 +10,26 @@ import (
 )
 
 type ConfigDefine struct {
-	PackageName string
-	ConfigName  string
-	FieldList   []*ConfigFieldDefine
+	PackageName      string
+	ConfigName       string
+	FieldList        []*ConfigFieldDefine
+	EnumInfoTemplate string
 }
 type ConfigFieldDefine struct {
 	Name   string
 	Type   string
 	IsList bool
+}
+type EnumDefine struct {
+	ConfigName   string
+	EnumName     string
+	EnumElemList []*EnumElemDefine
+}
+type EnumElemDefine struct {
+	ConfigName    string
+	EnumName      string
+	EnumElemName  string
+	EnumElemValue string
 }
 
 //根据模板生成代码

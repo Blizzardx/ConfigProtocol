@@ -19,7 +19,7 @@ type {{.ConfigName}}Info struct {
 type genRuntimeCodeTool_Java struct {
 }
 
-func (self *genRuntimeCodeTool_Java) GenRuntimeCode(outputPath string, provision *ConfigDefine) error {
+func (self *genRuntimeCodeTool_Java) GenRuntimeCode(outputPath string, provision *ConfigDefine, enumInfo []*EnumDefine) error {
 	return nil
 }
 func (self *genRuntimeCodeTool_Java) Name() define.SupportLan {

@@ -19,7 +19,7 @@ type {{.ConfigName}}Info struct {
 type genRuntimeCodeTool_Csharp struct {
 }
 
-func (self *genRuntimeCodeTool_Csharp) GenRuntimeCode(outputPath string, provision *ConfigDefine) error {
+func (self *genRuntimeCodeTool_Csharp) GenRuntimeCode(outputPath string, provision *ConfigDefine, enumInfo []*EnumDefine) error {
 	return nil
 }
 func (self *genRuntimeCodeTool_Csharp) Name() define.SupportLan {

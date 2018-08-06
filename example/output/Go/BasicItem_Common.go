@@ -2,6 +2,16 @@
 // DO NOT EDIT!
 package config
 
+type BasicItem_CommonQuality int32
+
+const (
+	BasicItem_CommonQuality_yelow BasicItem_CommonQuality = 1
+
+	BasicItem_CommonQuality_blue BasicItem_CommonQuality = 2
+
+	BasicItem_CommonQuality_red BasicItem_CommonQuality = 3
+)
+
 type BasicItem_Common struct {
 	Content []*BasicItem_CommonInfo
 }
@@ -23,4 +33,6 @@ type BasicItem_CommonInfo struct {
 	ConsumeCoin int32
 
 	FormatIndex int32
+
+	quality BasicItem_CommonQuality
 }

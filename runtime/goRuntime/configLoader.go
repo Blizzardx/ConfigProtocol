@@ -4,7 +4,7 @@ import (
 	"errors"
 	"github.com/Blizzardx/ConfigProtocol/common"
 	"github.com/Blizzardx/ConfigProtocol/pbConfig"
-	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 	"reflect"
 	"strings"
 )

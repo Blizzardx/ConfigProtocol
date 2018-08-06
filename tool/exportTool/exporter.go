@@ -6,7 +6,7 @@ import (
 	"github.com/Blizzardx/ConfigProtocol/define"
 	"github.com/Blizzardx/ConfigProtocol/pbConfig"
 	"github.com/Blizzardx/ConfigProtocol/tool/excelHandler"
-	"github.com/gogo/protobuf/proto"
+	"github.com/golang/protobuf/proto"
 	"strconv"
 	"strings"
 )
@@ -17,11 +17,12 @@ type ExportTarget struct {
 }
 
 type ConfigRunTimeCodeGenerator interface {
-	GenRuntimeCode(outputPath string, provision *ConfigDefine) error
+	GenRuntimeCode(outputPath string, provision *ConfigDefine, enumInfo []*EnumDefine) error
 	Name() define.SupportLan
 }
 
 var codeGenToolStore = map[define.SupportLan]ConfigRunTimeCodeGenerator{}
+var currentConfigEnumInfoList []*config.ConfigEnumInfo
 
 func init() {
 	// register
@@ -30,6 +31,8 @@ func init() {
 	codeGenToolStore[define.SupportLan_Java] = &genRuntimeCodeTool_Java{}
 }
 func ExportFile(filePath string, outputPath string, exportTargetList []*ExportTarget, outputFileSuffix string) error {
+	currentConfigEnumInfoList = nil
+
 	// parser file name
 	fileName, _ := common.ParserFileNameByPath(filePath)
 
@@ -48,6 +51,7 @@ func ExportFile(filePath string, outputPath string, exportTargetList []*ExportTa
 	if err != nil {
 		return err
 	}
+
 	// begin check content
 	err = checkConfigContentCorrect(provision, content)
 	if nil != err {
@@ -91,6 +95,13 @@ func checkConfigProvisionCorrect(provision *define.ConfigInfo) error {
 			return errors.New("can't find key field by name " + provision.GlobalInfo.TableKeyFieldName)
 		}
 	}
+	// read enum
+	var err error
+	currentConfigEnumInfoList, err = parserEnumList(provision.GlobalInfo.GlobalEnumDefine)
+	if nil != err {
+		return err
+	}
+
 	var fieldNameMap = map[string]int32{}
 	for _, field := range provision.LineInfo {
 		if field.FieldType == "" && field.FieldName == "" {
@@ -99,7 +110,10 @@ func checkConfigProvisionCorrect(provision *define.ConfigInfo) error {
 
 		_, error := convertStrToFieldType(field.FieldType)
 		if error != nil {
-			return error
+			// check is field in enum list
+			if !checkFieldIsInEnum(field.FieldType) {
+				return error
+			}
 		}
 		if field.FieldName == "" {
 			return errors.New("field named error : " + field.FieldName)
@@ -111,11 +125,47 @@ func checkConfigProvisionCorrect(provision *define.ConfigInfo) error {
 	}
 	return nil
 }
+func checkFieldIsInEnum(fieldType string) bool {
+	for _, enum := range currentConfigEnumInfoList {
+		if enum.Name == fieldType {
+			return true
+		}
+	}
+	return false
+}
+func checkFieldIsInEnumWithName(fieldType string) (bool, *config.ConfigEnumInfo) {
+	for _, enum := range currentConfigEnumInfoList {
+		if enum.Name == fieldType {
+			return true, enum
+		}
+	}
+	return false, nil
+}
+func checkFieldIsCorrectInEnum(fieldType string, value string) bool {
+	for _, enum := range currentConfigEnumInfoList {
+		if enum.Name == fieldType {
+			// begin check value
+			var tmpValue int32 = 0
+			err := common.Parser_int32(value, &tmpValue)
+			if nil != err {
+				return false
+			}
+			for _, enumElement := range enum.Value {
+				if enumElement.Value == tmpValue {
+					return true
+				}
+			}
+			return false
+		}
+	}
+	return false
+
+}
 func checkConfigContentCorrect(provision *define.ConfigInfo, content [][]string) error {
 	fixedContent := excelHandler.FixExcelFile(content)
 	for rowIndex, rowContent := range fixedContent {
 		for colIndex, contentCell := range rowContent {
-			positionMark := " at col: " + strconv.Itoa(colIndex) + " row: " + strconv.Itoa(rowIndex+4)
+			positionMark := " at col: " + strconv.Itoa(colIndex+1) + " row: " + strconv.Itoa(rowIndex+4)
 			if colIndex >= len(provision.LineInfo) {
 				// check error
 				return errors.New("out of line range " + positionMark)
@@ -136,7 +186,7 @@ func checkConfigContentCorrect(provision *define.ConfigInfo, content [][]string)
 						fieldProvisionInfo.FieldValueRangeLimitMin,
 						fieldProvisionInfo.FieldValueRangeLimitMax)
 					if nil != err {
-						return errors.New("error on " + positionMark + " " + err.Error())
+						return errors.New("error" + positionMark + " " + err.Error())
 					}
 				}
 			} else {
@@ -146,7 +196,7 @@ func checkConfigContentCorrect(provision *define.ConfigInfo, content [][]string)
 					fieldProvisionInfo.FieldValueRangeLimitMin,
 					fieldProvisionInfo.FieldValueRangeLimitMax)
 				if nil != err {
-					return errors.New("error on " + positionMark + " " + err.Error())
+					return errors.New("error" + positionMark + " " + err.Error())
 				}
 			}
 		}
@@ -155,7 +205,13 @@ func checkConfigContentCorrect(provision *define.ConfigInfo, content [][]string)
 }
 func checkFieldTypeCorrect(fieldTypeStr string, content string, minValue string, maxValue string) error {
 
-	fieldType, _ := convertStrToFieldType(fieldTypeStr)
+	fieldType, err := convertStrToFieldType(fieldTypeStr)
+	if err != nil {
+		if checkFieldIsCorrectInEnum(fieldTypeStr, content) {
+			return nil
+		}
+		return errors.New("error on parser enum " + fieldTypeStr + " with unknown value " + content)
+	}
 	switch fieldType {
 	case config.FieldType_typeInt32:
 		var tmpValue int32 = 0
@@ -254,6 +310,77 @@ func convertStrToFieldType(fileType string) (config.FieldType, error) {
 		return config.FieldType_typeInt32, errors.New("unknown field type " + fileType)
 	}
 }
+func parserEnumList(enumList []string) ([]*config.ConfigEnumInfo, error) {
+
+	var keyNameMap = map[string]int{}
+	var result []*config.ConfigEnumInfo
+	for _, enum := range enumList {
+		tmpElem, err := parserEnumString(enum)
+		if err != nil {
+			return nil, err
+		}
+		if _, ok := keyNameMap[tmpElem.Name]; ok {
+			return nil, errors.New("error on parser enum ,name repeated " + tmpElem.Name)
+		}
+		keyNameMap[tmpElem.Name] = 1
+		result = append(result, tmpElem)
+	}
+	return result, nil
+}
+func parserEnumString(enum string) (*config.ConfigEnumInfo, error) {
+	// parser enum name
+	tmpStr := strings.Split(enum, ":")
+	if len(tmpStr) != 2 {
+		return nil, errors.New("error on parser enum " + enum)
+	}
+	result := &config.ConfigEnumInfo{}
+	result.Name = tmpStr[0]
+	tmpStr = strings.Split(tmpStr[1], "|")
+	if len(tmpStr) <= 0 {
+		return nil, errors.New("error on parser enum values " + enum)
+	}
+	var keyNameMap = map[string]int{}
+	for _, tmpElem := range tmpStr {
+		tmpCell := strings.Split(tmpElem, "=")
+		if len(tmpCell) != 2 {
+			return nil, errors.New("error on parser enum values " + enum + " at: " + tmpElem)
+		}
+		// check value type
+		tmpCellEnum := &config.ConfigEnumElementInfo{}
+		tmpCellEnum.Name = tmpCell[0]
+		if tmpCellEnum.Name == "" || tmpCellEnum.Name == " " {
+			return nil, errors.New("error on parser enum values " + enum + " at: " + tmpElem + " key can't empty")
+		}
+		if _, ok := keyNameMap[tmpCellEnum.Name]; ok {
+			return nil, errors.New("key repeated " + enum + " at: " + tmpCellEnum.Name)
+		}
+
+		keyNameMap[tmpCellEnum.Name] = 1
+
+		err := common.Parser_int32(tmpCell[1], &tmpCellEnum.Value)
+		if nil != err {
+			return nil, errors.New("error on parser enum values " + enum + " at: " + tmpElem + " value must be int32 " + tmpCell[1])
+		}
+		result.Value = append(result.Value, tmpCellEnum)
+	}
+	return result, nil
+}
+func convertPbEnum(configName string, pbEnumInfo []*config.ConfigEnumInfo) []*EnumDefine {
+	var result []*EnumDefine
+	for _, pbEnum := range pbEnumInfo {
+		elem := &EnumDefine{ConfigName: configName, EnumName: pbEnum.Name}
+		for _, pbEnumElem := range pbEnum.Value {
+			elem.EnumElemList = append(elem.EnumElemList, &EnumElemDefine{
+				ConfigName:    configName,
+				EnumName:      pbEnum.Name,
+				EnumElemName:  pbEnumElem.Name,
+				EnumElemValue: strconv.Itoa(int(pbEnumElem.Value)),
+			})
+		}
+		result = append(result, elem)
+	}
+	return result
+}
 func doExport(outputPath string, provision *define.ConfigInfo, content [][]string, exportTarget *ExportTarget) (*config.ConfigTable, error) {
 	pbConfig := &config.ConfigTable{}
 
@@ -293,6 +420,11 @@ func doExport(outputPath string, provision *define.ConfigInfo, content [][]strin
 		}
 		pbConfig.Content = append(pbConfig.Content, configLine)
 	}
+
+	pbConfig.EnumInfoList = currentConfigEnumInfoList
+
+	enumDefine := convertPbEnum(provision.TableName, currentConfigEnumInfoList)
+
 	define := &ConfigDefine{PackageName: "config", ConfigName: provision.TableName}
 	for index, field := range provision.LineInfo {
 		if _, ok := ignoreColIndex[index]; ok {
@@ -300,8 +432,9 @@ func doExport(outputPath string, provision *define.ConfigInfo, content [][]strin
 		}
 		define.FieldList = append(define.FieldList, &ConfigFieldDefine{Name: field.FieldName, Type: field.FieldType, IsList: field.IsList})
 	}
+
 	// gen runtime code
-	err := codeGenToolStore[exportTarget.Lan].GenRuntimeCode(outputPath, define)
+	err := codeGenToolStore[exportTarget.Lan].GenRuntimeCode(outputPath, define, enumDefine)
 	if nil != err {
 		return nil, err
 	}

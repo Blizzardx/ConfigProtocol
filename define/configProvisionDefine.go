@@ -6,19 +6,9 @@ type ConfigInfo struct {
 	LineInfo   []*ConfigFieldInfo
 }
 type ConfigHeadInfo struct {
-	TableType         string                      `json:"type"` // list or map
-	TableKeyFieldName string                      `json:"keyName"`
-	GlobalDefine      []*ConfigConstFieldInfo     `json:"const"`
-	GlobalEnumDefine  []*ConfigConstEnumFieldInfo `json:"constEnum"`
-}
-type ConfigConstFieldInfo struct {
-	FieldType  string `json:"type"`
-	FieldName  string `json:"name"`
-	FieldValue string `json:"value"`
-}
-type ConfigConstEnumFieldInfo struct {
-	FieldName  string  `json:"name"`
-	FieldValue []int32 `json:"value"`
+	TableType         string   `json:"type"` // list or map
+	TableKeyFieldName string   `json:"keyName"`
+	GlobalEnumDefine  []string `json:"enum"` //like quality:black=1|white=2|yellow=3
 }
 type ConfigFieldInfo struct {
 	FieldType               string `json:"type"`
