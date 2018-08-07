@@ -61,6 +61,38 @@ func LoadConfig(configStruct interface{}) error {
 
 	return nil
 }
+func LoadConfigByContent(byteContent []byte, configStruct interface{}) error {
+
+	//parser class name to reflect config name
+	configType := reflect.TypeOf(configStruct)
+
+	pbConfig := &config.ConfigTable{}
+	err := proto.Unmarshal(byteContent, pbConfig)
+	if err != nil {
+		return err
+	}
+	fieldNum := configType.NumField()
+	tableFieldInfo := configType.Field(0)
+	if fieldNum != 1 {
+		return errors.New("error type")
+	}
+	configInstance := reflect.ValueOf(configStruct)
+
+	// check type
+	if pbConfig.Type == config.ConfigType_typeList {
+		if tableFieldInfo.Type.Kind() != reflect.Slice {
+			return errors.New("error type")
+		}
+		parserList(configInstance, configType, pbConfig)
+	} else {
+		if tableFieldInfo.Type.Kind() != reflect.Map {
+			return errors.New("error type")
+		}
+		parserMap(configInstance, configType, pbConfig)
+	}
+
+	return nil
+}
 func parserList(configInstance reflect.Value, tableType reflect.Type, pbConfig *config.ConfigTable) reflect.Value {
 	configContentInstance := reflect.New(tableType.Field(0).Type).Elem()
 
@@ -142,9 +174,10 @@ func parserLine(colIndex int, pbConfig *config.ConfigTable, lineDefineField refl
 			return
 		}
 		if fieldInfo.Type == config.FieldType_typeEnum {
-			//tmpCellInstance := reflect.New(lineContentInstance.FieldByName(definedFiledInfo.Name).Type()).Elem()
-			//tmpCellInstance.Set(reflect.ValueOf(cellValue))
-			//cellValue = tmpCellInstance
+			tmpCellInstance := reflect.New(lineContentInstance.Elem().FieldByName(definedFiledInfo.Name).Type()).Elem()
+			tmpCellInstance.SetInt(int64(cellValue.(int32)))
+			lineContentInstance.Elem().FieldByName(definedFiledInfo.Name).Set(tmpCellInstance)
+
 		} else {
 			lineContentInstance.Elem().FieldByName(definedFiledInfo.Name).Set(reflect.ValueOf(cellValue))
 		}
