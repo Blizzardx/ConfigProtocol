@@ -2,6 +2,7 @@ package goRuntime
 
 import (
 	"errors"
+	"fmt"
 	"github.com/Blizzardx/ConfigProtocol/common"
 	"github.com/Blizzardx/ConfigProtocol/pbConfig"
 	"github.com/golang/protobuf/proto"
@@ -11,6 +12,9 @@ import (
 
 var workspace = ""
 
+func SetWorkspace(workspacePath string) {
+	workspace = workspacePath
+}
 func LoadConfig(configStruct interface{}) error {
 	//parser class name to reflect config name
 	configType := reflect.TypeOf(configStruct)
@@ -58,8 +62,7 @@ func LoadConfig(configStruct interface{}) error {
 	return nil
 }
 func parserList(configInstance reflect.Value, tableType reflect.Type, pbConfig *config.ConfigTable) reflect.Value {
-	configContentInstance := reflect.New(tableType.Field(0).Type)
-	configInstance.Field(0).Set(configContentInstance)
+	configContentInstance := reflect.New(tableType.Field(0).Type).Elem()
 
 	lineDefineField := tableType.Field(0).Type.Elem().Elem()
 	for _, rowContent := range pbConfig.Content {
@@ -69,11 +72,11 @@ func parserList(configInstance reflect.Value, tableType reflect.Type, pbConfig *
 		}
 		configContentInstance = reflect.Append(configContentInstance, lineContentInstance)
 	}
+	configInstance.Elem().Field(0).Set(configContentInstance)
 	return configInstance
 }
 func parserMap(configInstance reflect.Value, tableType reflect.Type, pbConfig *config.ConfigTable) reflect.Value {
-	configContentInstance := reflect.New(tableType.Field(0).Type)
-	configInstance.Field(0).Set(configContentInstance)
+	configContentInstance := reflect.MakeMap(tableType.Field(0).Type)
 
 	lineDefineField := tableType.Field(0).Type.Elem().Elem()
 	for _, rowContent := range pbConfig.Content {
@@ -86,12 +89,13 @@ func parserMap(configInstance reflect.Value, tableType reflect.Type, pbConfig *c
 			}
 		}
 		tmpKey := configContentInstance.MapIndex(thisLineKeyValue)
-		if !tmpKey.IsValid() {
+		if tmpKey.IsValid() {
 			// error
 			continue
 		}
 		configContentInstance.SetMapIndex(thisLineKeyValue, lineContentInstance)
 	}
+	configInstance.Elem().Field(0).Set(configContentInstance)
 	return configInstance
 }
 func parserLine(colIndex int, pbConfig *config.ConfigTable, lineDefineField reflect.Type, cell string, lineContentInstance reflect.Value) (isKey bool, keyValue reflect.Value) {
@@ -134,13 +138,20 @@ func parserLine(colIndex int, pbConfig *config.ConfigTable, lineDefineField refl
 		cellValue, err := parserCell(cell, fieldInfo.Type)
 		if err != nil {
 			//return err
+			fmt.Println(err)
 			return
 		}
-		lineContentInstance.FieldByName(definedFiledInfo.Name).Set(reflect.ValueOf(cellValue))
+		if fieldInfo.Type == config.FieldType_typeEnum {
+			//tmpCellInstance := reflect.New(lineContentInstance.FieldByName(definedFiledInfo.Name).Type()).Elem()
+			//tmpCellInstance.Set(reflect.ValueOf(cellValue))
+			//cellValue = tmpCellInstance
+		} else {
+			lineContentInstance.Elem().FieldByName(definedFiledInfo.Name).Set(reflect.ValueOf(cellValue))
+		}
 	}
 
 	if fieldInfo.Name == pbConfig.KeyFieldName {
-		keyValue = lineContentInstance.FieldByName(definedFiledInfo.Name)
+		keyValue = lineContentInstance.Elem().FieldByName(definedFiledInfo.Name)
 		isKey = true
 	}
 	return
@@ -172,6 +183,10 @@ func parserCell(cell string, pbType config.FieldType) (interface{}, error) {
 		var tmpValue string
 		err := common.Parser_string(cell, &tmpValue)
 		return tmpValue, err
+	case config.FieldType_typeEnum:
+		var tmpValue int32
+		err := common.Parser_int32(cell, &tmpValue)
+		return tmpValue, err
 		//case config.FieldType_typeClass:
 	}
 	return 0, errors.New("unsupport type ")
@@ -193,6 +208,8 @@ func checkType(definedType reflect.Kind, pbType config.FieldType) bool {
 		return definedType == reflect.String
 	case config.FieldType_typeClass:
 		return definedType == reflect.Struct
+	case config.FieldType_typeEnum:
+		return definedType == reflect.Int32
 	}
 	return false
 }

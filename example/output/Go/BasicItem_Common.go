@@ -13,7 +13,7 @@ const (
 )
 
 type BasicItem_Common struct {
-	Content []*BasicItem_CommonInfo
+	Content map[int32]*BasicItem_CommonInfo
 }
 type BasicItem_CommonInfo struct {
 	Id int32
@@ -34,5 +34,5 @@ type BasicItem_CommonInfo struct {
 
 	FormatIndex int32
 
-	quality BasicItem_CommonQuality
+	Quality1 BasicItem_CommonQuality
 }

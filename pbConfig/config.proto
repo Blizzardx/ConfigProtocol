@@ -12,6 +12,9 @@ enum FieldType {
     typeBool = 4;
     typeString = 5;
     typeClass = 6;
+    typeEnum = 7;
+    typeDateTime = 8;
+    typeColor = 9;
 }
 enum ConfigType{
     typeList = 0;
@@ -27,6 +30,7 @@ message ConfigFieldInfo{
     string name = 1;
     FieldType type = 2;
     bool isList = 3;
+    string parameter = 4;
 }
 message ConfigEnumElementInfo{
     string name = 1;

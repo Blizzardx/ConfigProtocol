@@ -12,6 +12,7 @@ import (
 type ConfigDefine struct {
 	PackageName      string
 	ConfigName       string
+	MapKeyType       string
 	FieldList        []*ConfigFieldDefine
 	EnumInfoTemplate string
 }

@@ -306,6 +306,10 @@ func convertStrToFieldType(fileType string) (config.FieldType, error) {
 		return config.FieldType_typeString, nil
 	case "class":
 		return config.FieldType_typeClass, nil
+	case "time":
+		return config.FieldType_typeDateTime, nil
+	case "color":
+		return config.FieldType_typeColor, nil
 	default:
 		return config.FieldType_typeInt32, errors.New("unknown field type " + fileType)
 	}
@@ -404,9 +408,16 @@ func doExport(outputPath string, provision *define.ConfigInfo, content [][]strin
 			ignoreColIndex[index] = 1
 			continue
 		}
-		fieldType, _ := convertStrToFieldType(field.FieldType)
-
-		pbConfig.FieldInfoList = append(pbConfig.FieldInfoList, &config.ConfigFieldInfo{Name: field.FieldName, Type: fieldType, IsList: field.IsList})
+		parameter := ""
+		fieldType, err := convertStrToFieldType(field.FieldType)
+		if err != nil {
+			// check is enum
+			if ok, enumInfo := checkFieldIsInEnumWithName(field.FieldType); ok {
+				fieldType = config.FieldType_typeEnum
+				parameter = enumInfo.Name
+			}
+		}
+		pbConfig.FieldInfoList = append(pbConfig.FieldInfoList, &config.ConfigFieldInfo{Name: field.FieldName, Type: fieldType, IsList: field.IsList, Parameter: parameter})
 	}
 	fixedContent := excelHandler.FixExcelFile(content)
 	for _, rowContent := range fixedContent {
@@ -432,7 +443,15 @@ func doExport(outputPath string, provision *define.ConfigInfo, content [][]strin
 		}
 		define.FieldList = append(define.FieldList, &ConfigFieldDefine{Name: field.FieldName, Type: field.FieldType, IsList: field.IsList})
 	}
-
+	define.MapKeyType = ""
+	if provision.GlobalInfo.TableType == "map" {
+		for _, tmpField := range provision.LineInfo {
+			if tmpField.FieldName == provision.GlobalInfo.TableKeyFieldName {
+				define.MapKeyType = tmpField.FieldType
+				break
+			}
+		}
+	}
 	// gen runtime code
 	err := codeGenToolStore[exportTarget.Lan].GenRuntimeCode(outputPath, define, enumDefine)
 	if nil != err {
