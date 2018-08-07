@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/360EntSecGroup-Skylar/excelize"
 	"github.com/Blizzardx/ConfigProtocol/define"
+	"strings"
 )
 
 func ReadExcelFile(filePath string) ([][]string, error) {
@@ -50,6 +51,16 @@ func ParserExcelToConfigProvision(content [][]string, fileName string) (*define.
 			}
 		}
 		provision.LineInfo = append(provision.LineInfo, fieldInfo)
+	}
+	for _, field := range provision.LineInfo {
+		size := strings.Count(field.FieldName, "") - 1
+		if size > 1 {
+			firstL := string(field.FieldName[0])
+			otherL := string(field.FieldName[1:])
+			field.FieldName = strings.ToUpper(firstL) + otherL
+		} else {
+			field.FieldName = strings.ToUpper(field.FieldName)
+		}
 	}
 	return provision, nil
 }

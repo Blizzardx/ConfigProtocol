@@ -8,25 +8,8 @@ import (
 	"github.com/Blizzardx/ConfigProtocol/tool/exportTool"
 )
 
-//
-//type ItemConfig struct {
-//	Content []*ItemConfigInfo
-//}
-//type ItemConfigInfo struct {
-//	Id   int32
-//	Name string
-//}
-//
-//type BoxConfig struct {
-//	Content map[int32]*BoxConfigInfo
-//}
-//type BoxConfigInfo struct {
-//	Id   int32
-//	Name string
-//}
-
 func main() {
-	//gen()
+	gen()
 	use()
 }
 func gen() {
