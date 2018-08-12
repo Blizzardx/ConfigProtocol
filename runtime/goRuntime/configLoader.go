@@ -159,7 +159,14 @@ func parserLine(colIndex int, pbConfig *config.ConfigTable, lineDefineField refl
 			if err != nil {
 				continue
 			}
-			listInstance = reflect.Append(listInstance, reflect.ValueOf(cellValue))
+			if fieldInfo.Type == config.FieldType_typeEnum {
+				tmpCellInstance := reflect.New(listInstance.Type().Elem()).Elem()
+				tmpCellInstance.SetInt(int64(cellValue.(int32)))
+				listInstance = reflect.Append(listInstance, tmpCellInstance)
+
+			} else {
+				listInstance = reflect.Append(listInstance, reflect.ValueOf(cellValue))
+			}
 		}
 		lineContentInstance.Elem().FieldByName(definedFiledInfo.Name).Set(listInstance)
 	} else {
