@@ -2,9 +2,8 @@
 Id
 Icon	
 Quality
-Price
-
-LimitNum	
+Price
+LimitNum	
 Acauire
 ConsumeItem
 ConsumeCoin
@@ -13,12 +12,13 @@
 Quality	
 yelow
 blue
-red*/
+red*6
 800001
 A_Qd_009
 1
 10
-999
+
+999|2054|1
 -1
 {}
 0

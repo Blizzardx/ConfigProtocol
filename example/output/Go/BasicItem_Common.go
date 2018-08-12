@@ -24,7 +24,7 @@ type BasicItem_CommonInfo struct {
 
 	Price int32
 
-	LimitNum int32
+	LimitNum []int32
 
 	Acauire int32
 

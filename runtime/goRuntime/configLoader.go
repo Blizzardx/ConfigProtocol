@@ -151,7 +151,7 @@ func parserLine(colIndex int, pbConfig *config.ConfigTable, lineDefineField refl
 		if definedFiledInfo.Type.Kind() != reflect.Slice {
 			return
 		}
-		listInstance := reflect.New(definedFiledInfo.Type)
+		listInstance := reflect.New(definedFiledInfo.Type).Elem()
 		cellList := strings.Split(cell, "|")
 		for _, tmpCell := range cellList {
 
@@ -161,7 +161,7 @@ func parserLine(colIndex int, pbConfig *config.ConfigTable, lineDefineField refl
 			}
 			listInstance = reflect.Append(listInstance, reflect.ValueOf(cellValue))
 		}
-		lineContentInstance.FieldByName(definedFiledInfo.Name).Set(listInstance)
+		lineContentInstance.Elem().FieldByName(definedFiledInfo.Name).Set(listInstance)
 	} else {
 		// check type
 		if !checkType(definedFiledInfo.Type.Kind(), fieldInfo.Type) {
