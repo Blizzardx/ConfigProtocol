@@ -7,8 +7,10 @@ import (
 	"github.com/Blizzardx/ConfigProtocol/pbConfig"
 	"github.com/Blizzardx/ConfigProtocol/tool/excelHandler"
 	"github.com/golang/protobuf/proto"
+	"image/color"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type ExportTarget struct {
@@ -267,6 +269,24 @@ func checkFieldTypeCorrect(fieldTypeStr string, content string, minValue string,
 	case config.FieldType_typeString:
 		var tmpValue string = ""
 		err := common.Parser_string(content, &tmpValue)
+		if nil != err {
+			return err
+		}
+		return nil
+	case config.FieldType_typeDateTime:
+		var tmpValue time.Time
+		err := common.Parser_dateTime(content, &tmpValue)
+		if nil != err {
+			return err
+		}
+		err = common.CheckValueLimit_dateTime(tmpValue, minValue, maxValue)
+		if nil != err {
+			return err
+		}
+		return nil
+	case config.FieldType_typeColor:
+		var tmpValue color.RGBA
+		err := common.Parser_color(content, &tmpValue)
 		if nil != err {
 			return err
 		}

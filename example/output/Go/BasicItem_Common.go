@@ -2,6 +2,10 @@
 // DO NOT EDIT!
 package config
 
+import "time"
+
+import "image/color"
+
 type BasicItem_CommonQuality int32
 
 const (
@@ -35,4 +39,10 @@ type BasicItem_CommonInfo struct {
 	FormatIndex int32
 
 	Quality1 BasicItem_CommonQuality
+
+	ShowTime time.Time
+
+	EndTime time.Time
+
+	TextColor color.RGBA
 }

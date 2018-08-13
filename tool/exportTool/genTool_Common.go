@@ -15,6 +15,7 @@ type ConfigDefine struct {
 	MapKeyType       string
 	FieldList        []*ConfigFieldDefine
 	EnumInfoTemplate string
+	ImportPkg        []string
 }
 type ConfigFieldDefine struct {
 	Name   string
