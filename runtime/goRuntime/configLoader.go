@@ -6,8 +6,10 @@ import (
 	"github.com/Blizzardx/ConfigProtocol/common"
 	"github.com/Blizzardx/ConfigProtocol/pbConfig"
 	"github.com/golang/protobuf/proto"
+	"image/color"
 	"reflect"
 	"strings"
+	"time"
 )
 
 var workspace = ""
@@ -227,6 +229,14 @@ func parserCell(cell string, pbType config.FieldType) (interface{}, error) {
 		var tmpValue int32
 		err := common.Parser_int32(cell, &tmpValue)
 		return tmpValue, err
+	case config.FieldType_typeDateTime:
+		var tmpValue time.Time
+		err := common.Parser_dateTime(cell, &tmpValue)
+		return tmpValue, err
+	case config.FieldType_typeColor:
+		var tmpValue color.RGBA
+		err := common.Parser_color(cell, &tmpValue)
+		return tmpValue, err
 		//case config.FieldType_typeClass:
 	}
 	return 0, errors.New("unsupport type ")
@@ -250,6 +260,10 @@ func checkType(definedType reflect.Kind, pbType config.FieldType) bool {
 		return definedType == reflect.Struct
 	case config.FieldType_typeEnum:
 		return definedType == reflect.Int32
+	case config.FieldType_typeDateTime:
+		return definedType == reflect.Struct
+	case config.FieldType_typeColor:
+		return definedType == reflect.Struct
 	}
 	return false
 }

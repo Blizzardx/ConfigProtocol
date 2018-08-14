@@ -23,5 +23,8 @@ func use() {
 	goRuntime.SetWorkspace("output")
 	err := goRuntime.LoadConfig(content)
 	fmt.Println(err)
-	fmt.Printf("%v", content)
+	for _, v := range content.Content {
+		//fmt.Printf("%v", v)
+		fmt.Println(v)
+	}
 }

@@ -66,7 +66,7 @@ func Parser_color(contentStr string, attachmentValue *color.RGBA) error {
 	if err != nil {
 		return err
 	}
-	if contentLen == 6 {
+	if contentLen == 8 {
 		red := color64 >> 24
 		green := (color64 & 0x00FF0000) >> 16
 		blue := (color64 & 0x0000FF00) >> 8
