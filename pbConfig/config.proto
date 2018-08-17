@@ -46,6 +46,8 @@ message ConfigTable{
     repeated ConfigFieldInfo fieldInfoList = 3;
     repeated ConfigEnumInfo enumInfoList = 4;
     repeated ConfigLine content = 5;
+    string packageName = 6;
+    string configName = 7;
 }
 	
 

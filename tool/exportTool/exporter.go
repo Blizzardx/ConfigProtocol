@@ -408,6 +408,9 @@ func convertPbEnum(configName string, pbEnumInfo []*config.ConfigEnumInfo) []*En
 func doExport(outputPath string, provision *define.ConfigInfo, content [][]string, exportTarget *ExportTarget) (*config.ConfigTable, error) {
 	pbConfig := &config.ConfigTable{}
 
+	pbConfig.ConfigName = provision.TableName
+	pbConfig.PackageName = "config"
+
 	if provision.GlobalInfo.TableType == "list" {
 		pbConfig.Type = config.ConfigType_typeList
 
