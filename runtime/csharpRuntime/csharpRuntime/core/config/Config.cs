@@ -29,16 +29,17 @@ namespace Config {
             "aXN0GAMgASgIEhEKCXBhcmFtZXRlchgEIAEoCSI0ChVDb25maWdFbnVtRWxl",
             "bWVudEluZm8SDAoEbmFtZRgBIAEoCRINCgV2YWx1ZRgCIAEoBSJMCg5Db25m",
             "aWdFbnVtSW5mbxIMCgRuYW1lGAEgASgJEiwKBXZhbHVlGAIgAygLMh0uY29u",
-            "ZmlnLkNvbmZpZ0VudW1FbGVtZW50SW5mbyLIAQoLQ29uZmlnVGFibGUSIAoE",
+            "ZmlnLkNvbmZpZ0VudW1FbGVtZW50SW5mbyLxAQoLQ29uZmlnVGFibGUSIAoE",
             "dHlwZRgBIAEoDjISLmNvbmZpZy5Db25maWdUeXBlEhQKDGtleUZpZWxkTmFt",
             "ZRgCIAEoCRIuCg1maWVsZEluZm9MaXN0GAMgAygLMhcuY29uZmlnLkNvbmZp",
             "Z0ZpZWxkSW5mbxIsCgxlbnVtSW5mb0xpc3QYBCADKAsyFi5jb25maWcuQ29u",
             "ZmlnRW51bUluZm8SIwoHY29udGVudBgFIAMoCzISLmNvbmZpZy5Db25maWdM",
-            "aW5lKqcBCglGaWVsZFR5cGUSDQoJdHlwZUludDMyEAASDQoJdHlwZUludDY0",
-            "EAESDwoLdHlwZUZsb2F0MzIQAhIPCgt0eXBlRmxvYXQ2NBADEgwKCHR5cGVC",
-            "b29sEAQSDgoKdHlwZVN0cmluZxAFEg0KCXR5cGVDbGFzcxAGEgwKCHR5cGVF",
-            "bnVtEAcSEAoMdHlwZURhdGVUaW1lEAgSDQoJdHlwZUNvbG9yEAkqJwoKQ29u",
-            "ZmlnVHlwZRIMCgh0eXBlTGlzdBAAEgsKB3R5cGVNYXAQAWIGcHJvdG8z"));
+            "aW5lEhMKC3BhY2thZ2VOYW1lGAYgASgJEhIKCmNvbmZpZ05hbWUYByABKAkq",
+            "pwEKCUZpZWxkVHlwZRINCgl0eXBlSW50MzIQABINCgl0eXBlSW50NjQQARIP",
+            "Cgt0eXBlRmxvYXQzMhACEg8KC3R5cGVGbG9hdDY0EAMSDAoIdHlwZUJvb2wQ",
+            "BBIOCgp0eXBlU3RyaW5nEAUSDQoJdHlwZUNsYXNzEAYSDAoIdHlwZUVudW0Q",
+            "BxIQCgx0eXBlRGF0ZVRpbWUQCBINCgl0eXBlQ29sb3IQCSonCgpDb25maWdU",
+            "eXBlEgwKCHR5cGVMaXN0EAASCwoHdHlwZU1hcBABYgZwcm90bzM="));
       descriptor = pbr::FileDescriptor.FromGeneratedCode(descriptorData,
           new pbr::FileDescriptor[] { },
           new pbr::GeneratedClrTypeInfo(new[] {typeof(global::Config.FieldType), typeof(global::Config.ConfigType), }, new pbr::GeneratedClrTypeInfo[] {
@@ -47,7 +48,7 @@ namespace Config {
             new pbr::GeneratedClrTypeInfo(typeof(global::Config.ConfigFieldInfo), global::Config.ConfigFieldInfo.Parser, new[]{ "Name", "Type", "IsList", "Parameter" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Config.ConfigEnumElementInfo), global::Config.ConfigEnumElementInfo.Parser, new[]{ "Name", "Value" }, null, null, null),
             new pbr::GeneratedClrTypeInfo(typeof(global::Config.ConfigEnumInfo), global::Config.ConfigEnumInfo.Parser, new[]{ "Name", "Value" }, null, null, null),
-            new pbr::GeneratedClrTypeInfo(typeof(global::Config.ConfigTable), global::Config.ConfigTable.Parser, new[]{ "Type", "KeyFieldName", "FieldInfoList", "EnumInfoList", "Content" }, null, null, null)
+            new pbr::GeneratedClrTypeInfo(typeof(global::Config.ConfigTable), global::Config.ConfigTable.Parser, new[]{ "Type", "KeyFieldName", "FieldInfoList", "EnumInfoList", "Content", "PackageName", "ConfigName" }, null, null, null)
           }));
     }
     #endregion
@@ -805,6 +806,8 @@ namespace Config {
       fieldInfoList_ = other.fieldInfoList_.Clone();
       enumInfoList_ = other.enumInfoList_.Clone();
       content_ = other.content_.Clone();
+      packageName_ = other.packageName_;
+      configName_ = other.configName_;
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -864,6 +867,28 @@ namespace Config {
       get { return content_; }
     }
 
+    /// <summary>Field number for the "packageName" field.</summary>
+    public const int PackageNameFieldNumber = 6;
+    private string packageName_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string PackageName {
+      get { return packageName_; }
+      set {
+        packageName_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
+    /// <summary>Field number for the "configName" field.</summary>
+    public const int ConfigNameFieldNumber = 7;
+    private string configName_ = "";
+    [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
+    public string ConfigName {
+      get { return configName_; }
+      set {
+        configName_ = pb::ProtoPreconditions.CheckNotNull(value, "value");
+      }
+    }
+
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
     public override bool Equals(object other) {
       return Equals(other as ConfigTable);
@@ -882,6 +907,8 @@ namespace Config {
       if(!fieldInfoList_.Equals(other.fieldInfoList_)) return false;
       if(!enumInfoList_.Equals(other.enumInfoList_)) return false;
       if(!content_.Equals(other.content_)) return false;
+      if (PackageName != other.PackageName) return false;
+      if (ConfigName != other.ConfigName) return false;
       return true;
     }
 
@@ -893,6 +920,8 @@ namespace Config {
       hash ^= fieldInfoList_.GetHashCode();
       hash ^= enumInfoList_.GetHashCode();
       hash ^= content_.GetHashCode();
+      if (PackageName.Length != 0) hash ^= PackageName.GetHashCode();
+      if (ConfigName.Length != 0) hash ^= ConfigName.GetHashCode();
       return hash;
     }
 
@@ -914,6 +943,14 @@ namespace Config {
       fieldInfoList_.WriteTo(output, _repeated_fieldInfoList_codec);
       enumInfoList_.WriteTo(output, _repeated_enumInfoList_codec);
       content_.WriteTo(output, _repeated_content_codec);
+      if (PackageName.Length != 0) {
+        output.WriteRawTag(50);
+        output.WriteString(PackageName);
+      }
+      if (ConfigName.Length != 0) {
+        output.WriteRawTag(58);
+        output.WriteString(ConfigName);
+      }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -928,6 +965,12 @@ namespace Config {
       size += fieldInfoList_.CalculateSize(_repeated_fieldInfoList_codec);
       size += enumInfoList_.CalculateSize(_repeated_enumInfoList_codec);
       size += content_.CalculateSize(_repeated_content_codec);
+      if (PackageName.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(PackageName);
+      }
+      if (ConfigName.Length != 0) {
+        size += 1 + pb::CodedOutputStream.ComputeStringSize(ConfigName);
+      }
       return size;
     }
 
@@ -945,6 +988,12 @@ namespace Config {
       fieldInfoList_.Add(other.fieldInfoList_);
       enumInfoList_.Add(other.enumInfoList_);
       content_.Add(other.content_);
+      if (other.PackageName.Length != 0) {
+        PackageName = other.PackageName;
+      }
+      if (other.ConfigName.Length != 0) {
+        ConfigName = other.ConfigName;
+      }
     }
 
     [global::System.Diagnostics.DebuggerNonUserCodeAttribute]
@@ -973,6 +1022,14 @@ namespace Config {
           }
           case 42: {
             content_.AddEntriesFrom(input, _repeated_content_codec);
+            break;
+          }
+          case 50: {
+            PackageName = input.ReadString();
+            break;
+          }
+          case 58: {
+            ConfigName = input.ReadString();
             break;
           }
         }
