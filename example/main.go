@@ -15,6 +15,8 @@ func main() {
 func gen() {
 	var exportList []*exportTool.ExportTarget
 	exportList = append(exportList, &exportTool.ExportTarget{Name: "server", Lan: define.SupportLan_Go})
+	exportList = append(exportList, &exportTool.ExportTarget{Name: "client", Lan: define.SupportLan_Csharp})
+
 	err := exportTool.ExportFile("config/BasicItem_Common.xlsx", "output", exportList, ".bytes")
 	fmt.Println(err)
 }

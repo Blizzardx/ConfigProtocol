@@ -45,9 +45,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="auto\BasicItem_Common.cs" />
+    <Compile Include="core\Color.cs" />
     <Compile Include="core\ConfigProtoSerializer.cs" />
     <Compile Include="core\config\Config.cs" />
     <Compile Include="core\ILoger.cs" />
+    <Compile Include="core\ParserTool.cs" />
     <Compile Include="core\ReflectionManager.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

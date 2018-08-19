@@ -90,6 +90,9 @@ func checkConfigProvisionCorrect(provision *define.ConfigInfo) error {
 		for _, field := range provision.LineInfo {
 			if field.FieldName == provision.GlobalInfo.TableKeyFieldName {
 				isFindKeyField = true
+				if field.IsList {
+					return errors.New("key field can't be list " + provision.GlobalInfo.TableKeyFieldName)
+				}
 				break
 			}
 		}
