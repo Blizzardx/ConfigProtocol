@@ -81,8 +81,12 @@ namespace ConfigProto.core
                 errorMsg = "error on parser color";
                 return null;
             }
-            long color64 = Parser_Int64(content, out errorMsg);
-            if("" != errorMsg)
+            long color64 = 0;
+            try
+            {
+                color64 = Convert.ToInt64(content, 16);
+            }
+            catch (Exception e)
             {
                 errorMsg = "error on parser color";
                 return null;

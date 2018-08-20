@@ -23,15 +23,17 @@ namespace ConfigProto.core
                 return null;
             }
 
-            Type configTyep = ReflectionManager.Instance.GetTypeByName(config.PackageName);
-            if (null == configTyep)
+            Type configType = ReflectionManager.Instance.GetTypeByName(config.ConfigName);
+            //Type configTyep = Type.GetType(config.PackageName + "." + config.ConfigName);
+
+            if (null == configType)
             {
                 error = "error on get type by name " + config.PackageName;
                 Logger.Instance.LogError(error);
                 return null;
             }
-            var configInstance = Activator.CreateInstance(configTyep);
-            PropertyInfo[] pps = configInstance.GetType().GetProperties(BindingFlags.Public | BindingFlags.Instance);
+            var configInstance = Activator.CreateInstance(configType);
+            var pps = configType.GetFields(/*BindingFlags.Public | BindingFlags.Instance*/);
             if (pps.Length != 1)
             {
                 error = "error field count " + config.PackageName;
@@ -54,13 +56,13 @@ namespace ConfigProto.core
         }
 
         #region parser list
-        private static void ParserList(Object configInstance,ConfigTable config,PropertyInfo propertyInfo, out string error)
+        private static void ParserList(Object configInstance,ConfigTable config,FieldInfo propertyInfo, out string error)
         {
             error = "";
             string fieldName = config.ConfigName + "Info";
-            if (propertyInfo.PropertyType.Name != "List<" + fieldName + ">")
+            if (propertyInfo.FieldType.Name != "List<" + fieldName + ">")
             {
-                error = "error field type ,type must be " + "List<" + fieldName + ">" + " now is " + propertyInfo.PropertyType.Name;
+                error = "error field type ,type must be " + "List<" + fieldName + ">" + " now is " + propertyInfo.FieldType.Name;
                 return ;
             }
             var lineType = ReflectionManager.Instance.GetTypeByName(fieldName);
@@ -69,7 +71,7 @@ namespace ConfigProto.core
                 error = "cant' find type by name " + fieldName;
                 return;
             }
-            var content = Activator.CreateInstance(propertyInfo.PropertyType);
+            var content = Activator.CreateInstance(propertyInfo.FieldType);
             // set content line 
             propertyInfo.SetValue(configInstance, content);
             var lineMethorInfo = content.GetType().GetMethod("Add");
@@ -107,12 +109,13 @@ namespace ConfigProto.core
                 // do list.Add(lineInstance);
                 lineMethorInfo.Invoke(content, new []{lineInstance});
             }
+            error = parserCellErrorMsg;
             return ;
         }
         #endregion
 
         #region parser map
-        private static void ParserMap(Object configInstance, ConfigTable config, PropertyInfo propertyInfo, out string error)
+        private static void ParserMap(Object configInstance, ConfigTable config, FieldInfo propertyInfo, out string error)
         {
             error = "";
             
@@ -137,9 +140,9 @@ namespace ConfigProto.core
             }
 
             string fieldName = config.ConfigName + "Info";
-            if (propertyInfo.PropertyType.Name != "Dictionary<" + keyFieldName  + "," + fieldName + ">")
+            if (!propertyInfo.FieldType.Name.StartsWith("Dictionary"))
             {
-                error = "error field type ,type must be " + "List<" + fieldName + ">" + " now is " + propertyInfo.PropertyType.Name;
+                error = "error field type ,type must be Dictionary, now is " + propertyInfo.FieldType.Name;
                 return;
             }
             var lineType = ReflectionManager.Instance.GetTypeByName(fieldName);
@@ -148,7 +151,7 @@ namespace ConfigProto.core
                 error = "cant' find type by name " + fieldName;
                 return;
             }
-            var content = Activator.CreateInstance(propertyInfo.PropertyType);
+            var content = Activator.CreateInstance(propertyInfo.FieldType);
             // set content line 
             propertyInfo.SetValue(configInstance, content);
             var ContainsKeyMethorInfo = content.GetType().GetMethod("ContainsKey");
@@ -210,6 +213,7 @@ namespace ConfigProto.core
                 // do map.Add(lineInstance);
                 lineMethorInfo.Invoke(content, new[] { keyInstance, lineInstance });
             }
+            error = parserCellErrorMsg;
             return;
         }
         #endregion
@@ -218,7 +222,7 @@ namespace ConfigProto.core
         private static Object ParserCell(Object lineInstance, ConfigFieldInfo fieldInfo, string cell, out string errorMsg)
         {
             errorMsg = "";
-            PropertyInfo propertyInfo = lineInstance.GetType().GetProperty(fieldInfo.Name);
+            var propertyInfo = lineInstance.GetType().GetField(fieldInfo.Name);
             if (null == propertyInfo)
             {
                 errorMsg = "cant' find property by name " + fieldInfo.Name;
@@ -229,7 +233,7 @@ namespace ConfigProto.core
             if (fieldInfo.IsList)
             {
                 var cellList = cell.Split('|');
-                cellInstance = Activator.CreateInstance(propertyInfo.PropertyType);
+                cellInstance = Activator.CreateInstance(propertyInfo.FieldType);
                 var lineMethorInfo = cellInstance.GetType().GetMethod("Add");
                 if (null == lineMethorInfo)
                 {
@@ -278,7 +282,7 @@ namespace ConfigProto.core
                 case FieldType.TypeDateTime:
                     return ParserTool.Parser_DateTime(cell, out errorMsg);
                 case FieldType.TypeColor:
-                    break;
+                    return ParserTool.Parser_Color(cell, out errorMsg);
                 case FieldType.TypeClass:
                     break;
             }
