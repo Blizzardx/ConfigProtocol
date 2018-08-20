@@ -60,9 +60,9 @@ namespace ConfigProto.core
         {
             error = "";
             string fieldName = config.ConfigName + "Info";
-            if (propertyInfo.FieldType.Name != "List<" + fieldName + ">")
+            if (!propertyInfo.FieldType.Name.StartsWith("List"))
             {
-                error = "error field type ,type must be " + "List<" + fieldName + ">" + " now is " + propertyInfo.FieldType.Name;
+                error = "error field type ,type must be list, now is " + propertyInfo.FieldType.Name;
                 return ;
             }
             var lineType = ReflectionManager.Instance.GetTypeByName(fieldName);
