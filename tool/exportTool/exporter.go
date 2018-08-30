@@ -8,6 +8,8 @@ import (
 	"github.com/Blizzardx/ConfigProtocol/tool/excelHandler"
 	"github.com/golang/protobuf/proto"
 	"image/color"
+	"io/ioutil"
+	"log"
 	"strconv"
 	"strings"
 	"time"
@@ -17,7 +19,10 @@ type ExportTarget struct {
 	Name string
 	Lan  define.SupportLan
 }
-
+type LoadedConfigInfo struct {
+	Content   [][]string
+	Provision *define.ConfigInfo
+}
 type ConfigRunTimeCodeGenerator interface {
 	GenRuntimeCode(outputPath string, provision *ConfigDefine, enumInfo []*EnumDefine) error
 	Name() define.SupportLan
@@ -25,6 +30,8 @@ type ConfigRunTimeCodeGenerator interface {
 
 var codeGenToolStore = map[define.SupportLan]ConfigRunTimeCodeGenerator{}
 var currentConfigEnumInfoList []*config.ConfigEnumInfo
+var loadedConfigFileInfoStore = map[string]*LoadedConfigInfo{}
+var workSpace string = ""
 
 func init() {
 	// register
@@ -32,22 +39,127 @@ func init() {
 	codeGenToolStore[define.SupportLan_Csharp] = &genRuntimeCodeTool_Csharp{}
 	codeGenToolStore[define.SupportLan_Java] = &genRuntimeCodeTool_Java{}
 }
+func ExportDirectory(directory string, outputPath string, exportTargetList []*ExportTarget, outputFileSuffix string) error {
+	loadedConfigFileInfoStore = map[string]*LoadedConfigInfo{}
+	files, err := ioutil.ReadDir(directory)
+	if err != nil {
+		log.Println("error on check directory  " + err.Error())
+		return err
+	}
+	errStr := ""
+	workSpace = directory
+
+	for _, file := range files {
+		if file.IsDir() {
+			continue
+		}
+		err := doExportfile(directory+"/"+file.Name(), outputPath, exportTargetList, outputFileSuffix)
+		if err != nil {
+			errStr += err.Error()
+		}
+	}
+	if errStr == "" {
+		return nil
+	}
+	return errors.New(errStr)
+}
 func ExportFile(filePath string, outputPath string, exportTargetList []*ExportTarget, outputFileSuffix string) error {
+	loadedConfigFileInfoStore = map[string]*LoadedConfigInfo{}
+
+	workSpace = common.ParserFileDirectoryByFullPath(filePath)
+
+	return doExportfile(filePath, outputPath, exportTargetList, outputFileSuffix)
+}
+func getConfigFileInfo(filePath string, fileName string) ([][]string, *define.ConfigInfo, error) {
+	if v, ok := loadedConfigFileInfoStore[filePath]; ok {
+		if v.Provision != nil && v.Content != nil {
+			return v.Content, v.Provision, nil
+		}
+	}
+
+	// load excel file
+	content, err := excelHandler.ReadExcelFile(filePath)
+	if err != nil {
+		return nil, nil, err
+	}
+	// parser file header
+	provision, err := excelHandler.ParserExcelToConfigProvision(content, fileName)
+	if err != nil {
+		return nil, nil, err
+	}
+	loadedConfigFileInfoStore[filePath] = &LoadedConfigInfo{Content: content, Provision: provision}
+	return content, provision, err
+}
+func checkReference(content [][]string, provision *define.ConfigInfo) error {
+	errorStr := ""
+	for index, v := range provision.LineInfo {
+		if v.ReferenceTableName != "" {
+			// check this reference
+			fileName, fieldName, e := parserReferenceInfo(v.ReferenceTableName)
+			if e != nil {
+				errorStr += e.Error()
+				continue
+			}
+			for colIndex, lineContent := range content {
+				if index < 0 || index >= len(lineContent) {
+					errorStr += "index error " + strconv.Itoa(index) + " : " + strconv.Itoa(colIndex)
+					continue
+				}
+				targetCell := lineContent[index]
+				err := checkIsTargetColHavValue(fileName, fieldName, targetCell)
+				if nil != err {
+					errorStr += "index error " + strconv.Itoa(index) + " : " + strconv.Itoa(colIndex) + err.Error()
+					continue
+				}
+			}
+		}
+	}
+	return nil
+}
+func checkIsTargetColHavValue(fileName string, fieldName string, targetCell string) error {
+	//
+	targetCell = strings.TrimSpace(targetCell)
+	filePath := workSpace + "/" + fileName + ".xlsx"
+	content, provision, err := getConfigFileInfo(filePath, fileName)
+	if err != nil {
+		return err
+	}
+	targetColIndex := -1
+	for colIndex, fieldInfo := range provision.LineInfo {
+		if fieldInfo.FieldName == fieldName {
+			targetColIndex = colIndex
+			break
+		}
+	}
+	if targetColIndex == -1 {
+		return errors.New("can't find target filed by name " + fieldName)
+	}
+	for _, lineContent := range content {
+		if targetColIndex < 0 || targetColIndex >= len(lineContent) {
+			return errors.New("can't find target filed by name " + fieldName)
+		}
+		if strings.TrimSpace(lineContent[targetColIndex]) == targetCell {
+			return nil
+		}
+	}
+	return errors.New("can't find target filed by name " + fieldName)
+}
+func parserReferenceInfo(info string) (configName string, fieldName string, err error) {
+	list := strings.Split(info, ":")
+	if len(list) != 2 {
+		return "", "", errors.New("can't parser reference info by name " + info)
+	}
+	return list[0], list[1], nil
+}
+func doExportfile(filePath string, outputPath string, exportTargetList []*ExportTarget, outputFileSuffix string) error {
 	currentConfigEnumInfoList = nil
 
 	// parser file name
 	fileName, _ := common.ParserFileNameByPath(filePath)
 
-	// load excel file
-	content, err := excelHandler.ReadExcelFile(filePath)
-	if err != nil {
-		return err
-	}
-	// parser file header
-	provision, err := excelHandler.ParserExcelToConfigProvision(content, fileName)
-	if err != nil {
-		return err
-	}
+	// load excel file & parser file header
+	content, provision, err := getConfigFileInfo(filePath, fileName)
+
 	// begin check provision
 	err = checkConfigProvisionCorrect(provision)
 	if err != nil {
@@ -78,6 +190,10 @@ func ExportFile(filePath string, outputPath string, exportTargetList []*ExportTa
 		// do export
 		common.WriteFileByName(outputPath+"/"+provision.TableName+outputFileSuffix, byteContent)
 	}
+
+	// begin check reference
+	err = checkReference(content, provision)
+
 	return nil
 }
 func checkConfigProvisionCorrect(provision *define.ConfigInfo) error {

@@ -86,6 +86,19 @@ func PathExists(path string) (bool, error) {
 	}
 	return false, err
 }
+func ParserFileDirectoryByFullPath(fullpath string) string {
+
+	fullpath = strings.Replace(fullpath, "\\", "/", -1)
+	tmpList := strings.Split(fullpath, "/")
+	resDirectory := ""
+	for index := 0; index < len(tmpList)-1; index++ {
+		resDirectory += tmpList[index]
+		if index < len(tmpList)-2 {
+			resDirectory += "/"
+		}
+	}
+	return resDirectory
+}
 func ParserFileNameByPath(fullpath string) (name string, suffix string) {
 	fullpath = strings.Replace(fullpath, "\\", "/", -1)
 	nameWithSuffix := ""

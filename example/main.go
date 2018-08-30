@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	//gen()
+	gen()
 	use()
 }
 func gen() {
