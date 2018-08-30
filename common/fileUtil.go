@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"runtime/debug"
+	"strconv"
 	"strings"
 )
 
@@ -119,4 +120,10 @@ func ParserFileNameByPath(fullpath string) (name string, suffix string) {
 	}
 
 	return
+}
+func StringFormate(content string, args ...interface{}) string {
+	for i := 0; i < len(args); i++ {
+		content = strings.Replace(content, "{"+strconv.Itoa(i)+"}", fmt.Sprint(args[i]), -1)
+	}
+	return content
 }

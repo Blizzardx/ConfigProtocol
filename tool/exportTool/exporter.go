@@ -33,12 +33,7 @@ var currentConfigEnumInfoList []*config.ConfigEnumInfo
 var loadedConfigFileInfoStore = map[string]*LoadedConfigInfo{}
 var workSpace string = ""
 
-func init() {
-	// register
-	codeGenToolStore[define.SupportLan_Go] = &genRuntimeCodeTool_Go{}
-	codeGenToolStore[define.SupportLan_Csharp] = &genRuntimeCodeTool_Csharp{}
-	codeGenToolStore[define.SupportLan_Java] = &genRuntimeCodeTool_Java{}
-}
+//导出所有文件，指定文件夹内的所有文件
 func ExportDirectory(directory string, outputPath string, exportTargetList []*ExportTarget, outputFileSuffix string) error {
 	loadedConfigFileInfoStore = map[string]*LoadedConfigInfo{}
 	files, err := ioutil.ReadDir(directory)
@@ -53,7 +48,7 @@ func ExportDirectory(directory string, outputPath string, exportTargetList []*Ex
 		if file.IsDir() {
 			continue
 		}
-		err := doExportfile(directory+"/"+file.Name(), outputPath, exportTargetList, outputFileSuffix)
+		err := doExportFile(directory+"/"+file.Name(), outputPath, exportTargetList, outputFileSuffix)
 		if err != nil {
 			errStr += err.Error()
 		}
@@ -63,143 +58,28 @@ func ExportDirectory(directory string, outputPath string, exportTargetList []*Ex
 	}
 	return errors.New(errStr)
 }
+
+//导出单个文件
 func ExportFile(filePath string, outputPath string, exportTargetList []*ExportTarget, outputFileSuffix string) error {
 	loadedConfigFileInfoStore = map[string]*LoadedConfigInfo{}
 
 	workSpace = common.ParserFileDirectoryByFullPath(filePath)
 
-	return doExportfile(filePath, outputPath, exportTargetList, outputFileSuffix)
+	return doExportFile(filePath, outputPath, exportTargetList, outputFileSuffix)
 }
-func getConfigFileInfo(filePath string, fileName string) ([][]string, *define.ConfigInfo, error) {
-	if v, ok := loadedConfigFileInfoStore[filePath]; ok {
-		if v.Provision != nil && v.Content != nil {
-			return v.Content, v.Provision, nil
-		}
-	}
 
-	// load excel file
-	content, err := excelHandler.ReadExcelFile(filePath)
-	if err != nil {
-		return nil, nil, err
-	}
-	// parser file header
-	provision, err := excelHandler.ParserExcelToConfigProvision(content, fileName)
-	if err != nil {
-		return nil, nil, err
-	}
-	loadedConfigFileInfoStore[filePath] = &LoadedConfigInfo{Content: content, Provision: provision}
-	return content, provision, err
+//初始化
+func init() {
+	// register
+	codeGenToolStore[define.SupportLan_Go] = &genRuntimeCodeTool_Go{}
+	codeGenToolStore[define.SupportLan_Csharp] = &genRuntimeCodeTool_Csharp{}
+	codeGenToolStore[define.SupportLan_Java] = &genRuntimeCodeTool_Java{}
 }
-func checkReference(content [][]string, provision *define.ConfigInfo) error {
-	errorStr := ""
-	for index, v := range provision.LineInfo {
-		if v.ReferenceTableName != "" {
-			// check this reference
-			fileName, fieldName, e := parserReferenceInfo(v.ReferenceTableName)
-			if e != nil {
-				errorStr += e.Error()
-				continue
-			}
-			for colIndex, lineContent := range content {
-				if index < 0 || index >= len(lineContent) {
-					errorStr += "index error " + strconv.Itoa(index) + " : " + strconv.Itoa(colIndex)
-					continue
-				}
-				targetCell := lineContent[index]
-				err := checkIsTargetColHavValue(fileName, fieldName, targetCell)
-				if nil != err {
-					errorStr += "index error " + strconv.Itoa(index) + " : " + strconv.Itoa(colIndex) + err.Error()
-					continue
-				}
-			}
-		}
-	}
-	return nil
-}
-func checkIsTargetColHavValue(fileName string, fieldName string, targetCell string) error {
-	//
-	targetCell = strings.TrimSpace(targetCell)
-	filePath := workSpace + "/" + fileName + ".xlsx"
-	content, provision, err := getConfigFileInfo(filePath, fileName)
-	if err != nil {
-		return err
-	}
-	targetColIndex := -1
-	for colIndex, fieldInfo := range provision.LineInfo {
-		if fieldInfo.FieldName == fieldName {
-			targetColIndex = colIndex
-			break
-		}
-	}
-	if targetColIndex == -1 {
-		return errors.New("can't find target filed by name " + fieldName)
-	}
-	for _, lineContent := range content {
-		if targetColIndex < 0 || targetColIndex >= len(lineContent) {
-			return errors.New("can't find target filed by name " + fieldName)
-		}
-		if strings.TrimSpace(lineContent[targetColIndex]) == targetCell {
-			return nil
-		}
-	}
-	return errors.New("can't find target filed by name " + fieldName)
-}
-func parserReferenceInfo(info string) (configName string, fieldName string, err error) {
-	list := strings.Split(info, ":")
-	if len(list) != 2 {
-		return "", "", errors.New("can't parser reference info by name " + info)
-	}
-	return list[0], list[1], nil
-}
-func doExportfile(filePath string, outputPath string, exportTargetList []*ExportTarget, outputFileSuffix string) error {
-	currentConfigEnumInfoList = nil
 
-	// parser file name
-	fileName, _ := common.ParserFileNameByPath(filePath)
-
-	// load excel file & parser file header
-	content, provision, err := getConfigFileInfo(filePath, fileName)
-
-	// begin check provision
-	err = checkConfigProvisionCorrect(provision)
-	if err != nil {
-		return err
-	}
-
-	// begin check content
-	err = checkConfigContentCorrect(provision, content)
-	if nil != err {
-		return err
-	}
-
-	// begin export
-	for _, exportTarget := range exportTargetList {
-		tmpConfig, err := doExport(outputPath, provision, content, exportTarget)
-		if err != nil {
-			return errors.New("error on export config at target " + exportTarget.Name + " " + err.Error())
-		}
-		byteContent, err := proto.Marshal(tmpConfig)
-
-		if err != nil {
-			return errors.New("error on export config at target " + exportTarget.Name + " " + err.Error())
-		}
-
-		// ensure output path
-		common.EnsureFolder(outputPath)
-
-		// do export
-		common.WriteFileByName(outputPath+"/"+provision.TableName+outputFileSuffix, byteContent)
-	}
-
-	// begin check reference
-	err = checkReference(content, provision)
-
-	return nil
-}
+//文件描述检查
 func checkConfigProvisionCorrect(provision *define.ConfigInfo) error {
 	if provision.GlobalInfo.TableType != "list" && provision.GlobalInfo.TableType != "map" {
-		return errors.New("error table type " + provision.GlobalInfo.TableType + " table type must be 'list' or 'map' ")
-
+		return errors.New(getTipMessage(TipMessageDefine_ErrorFieldType, provision.GlobalInfo.TableType))
 	}
 	if provision.GlobalInfo.TableType == "map" {
 		isFindKeyField := false
@@ -207,13 +87,13 @@ func checkConfigProvisionCorrect(provision *define.ConfigInfo) error {
 			if field.FieldName == provision.GlobalInfo.TableKeyFieldName {
 				isFindKeyField = true
 				if field.IsList {
-					return errors.New("key field can't be list " + provision.GlobalInfo.TableKeyFieldName)
+					return errors.New(getTipMessage(TipMessageDefine_ErrorFieldKeyCannotBeList, provision.GlobalInfo.TableKeyFieldName))
 				}
 				break
 			}
 		}
 		if !isFindKeyField {
-			return errors.New("can't find key field by name " + provision.GlobalInfo.TableKeyFieldName)
+			return errors.New(getTipMessage(TipMessageDefine_ErrorFieldKeyNotFound, provision.GlobalInfo.TableKeyFieldName))
 		}
 	}
 	// read enum
@@ -237,59 +117,25 @@ func checkConfigProvisionCorrect(provision *define.ConfigInfo) error {
 			}
 		}
 		if field.FieldName == "" {
-			return errors.New("field named error : " + field.FieldName)
+			return errors.New(getTipMessage(TipMessageDefine_ErrorFieldError, field.FieldName))
 		}
 		if _, ok := fieldNameMap[field.FieldName]; ok {
-			return errors.New("more then one field named " + field.FieldName)
+			return errors.New(getTipMessage(TipMessageDefine_ErrorFieldRepeated, field.FieldName))
 		}
 		fieldNameMap[field.FieldName] = 1
 	}
 	return nil
 }
-func checkFieldIsInEnum(fieldType string) bool {
-	for _, enum := range currentConfigEnumInfoList {
-		if enum.Name == fieldType {
-			return true
-		}
-	}
-	return false
-}
-func checkFieldIsInEnumWithName(fieldType string) (bool, *config.ConfigEnumInfo) {
-	for _, enum := range currentConfigEnumInfoList {
-		if enum.Name == fieldType {
-			return true, enum
-		}
-	}
-	return false, nil
-}
-func checkFieldIsCorrectInEnum(fieldType string, value string) bool {
-	for _, enum := range currentConfigEnumInfoList {
-		if enum.Name == fieldType {
-			// begin check value
-			var tmpValue int32 = 0
-			err := common.Parser_int32(value, &tmpValue)
-			if nil != err {
-				return false
-			}
-			for _, enumElement := range enum.Value {
-				if enumElement.Value == tmpValue {
-					return true
-				}
-			}
-			return false
-		}
-	}
-	return false
 
-}
+//文件内容检查
 func checkConfigContentCorrect(provision *define.ConfigInfo, content [][]string) error {
 	fixedContent := excelHandler.FixExcelFile(content)
 	for rowIndex, rowContent := range fixedContent {
 		for colIndex, contentCell := range rowContent {
-			positionMark := " at col: " + strconv.Itoa(colIndex+1) + " row: " + strconv.Itoa(rowIndex+4)
+			positionMark := getTipMessage(TipMessageDefine_PositionMark, rowIndex+4, colIndex+1)
 			if colIndex >= len(provision.LineInfo) {
 				// check error
-				return errors.New("out of line range " + positionMark)
+				return errors.New(getTipMessage(TipMessageDefine_ErrorFormate, positionMark, getTipMessage(TipMessageDefine_OutofLineRange)))
 			}
 			fieldProvisionInfo := provision.LineInfo[colIndex]
 
@@ -307,7 +153,7 @@ func checkConfigContentCorrect(provision *define.ConfigInfo, content [][]string)
 						fieldProvisionInfo.FieldValueRangeLimitMin,
 						fieldProvisionInfo.FieldValueRangeLimitMax)
 					if nil != err {
-						return errors.New("error" + positionMark + " " + err.Error())
+						return errors.New(getTipMessage(TipMessageDefine_ErrorFormate, positionMark, err.Error()))
 					}
 				}
 			} else {
@@ -317,12 +163,34 @@ func checkConfigContentCorrect(provision *define.ConfigInfo, content [][]string)
 					fieldProvisionInfo.FieldValueRangeLimitMin,
 					fieldProvisionInfo.FieldValueRangeLimitMax)
 				if nil != err {
-					return errors.New("error" + positionMark + " " + err.Error())
+					return errors.New(getTipMessage(TipMessageDefine_ErrorFormate, positionMark, err.Error()))
 				}
 			}
 		}
 	}
 	return nil
+}
+
+//属性检查
+func getConfigFileInfo(filePath string, fileName string) ([][]string, *define.ConfigInfo, error) {
+	if v, ok := loadedConfigFileInfoStore[filePath]; ok {
+		if v.Provision != nil && v.Content != nil {
+			return v.Content, v.Provision, nil
+		}
+	}
+
+	// load excel file
+	content, err := excelHandler.ReadExcelFile(filePath)
+	if err != nil {
+		return nil, nil, err
+	}
+	// parser file header
+	provision, err := excelHandler.ParserExcelToConfigProvision(content, fileName)
+	if err != nil {
+		return nil, nil, err
+	}
+	loadedConfigFileInfoStore[filePath] = &LoadedConfigInfo{Content: content, Provision: provision}
+	return content, provision, err
 }
 func checkFieldTypeCorrect(fieldTypeStr string, content string, minValue string, maxValue string) error {
 
@@ -331,7 +199,7 @@ func checkFieldTypeCorrect(fieldTypeStr string, content string, minValue string,
 		if checkFieldIsCorrectInEnum(fieldTypeStr, content) {
 			return nil
 		}
-		return errors.New("error on parser enum " + fieldTypeStr + " with unknown value " + content)
+		return err
 	}
 	switch fieldType {
 	case config.FieldType_typeInt32:
@@ -411,23 +279,7 @@ func checkFieldTypeCorrect(fieldTypeStr string, content string, minValue string,
 		}
 		return nil
 	}
-	return errors.New("unknown field type " + fieldTypeStr)
-}
-func checkExportTarget(exportTarget *ExportTarget, fieldTarget string) bool {
-	if fieldTarget == "" {
-		return true
-	}
-	// parser field target
-	targetList := strings.Split(fieldTarget, "|")
-	if len(targetList) == 0 {
-		return true
-	}
-	for _, target := range targetList {
-		if target == exportTarget.Name {
-			return true
-		}
-	}
-	return false
+	return errors.New(getTipMessage(TipMessageDefine_UnknownFieldType, fieldTypeStr))
 }
 func convertStrToFieldType(fileType string) (config.FieldType, error) {
 	switch fileType {
@@ -450,8 +302,129 @@ func convertStrToFieldType(fileType string) (config.FieldType, error) {
 	case "color":
 		return config.FieldType_typeColor, nil
 	default:
-		return config.FieldType_typeInt32, errors.New("unknown field type " + fileType)
+		return config.FieldType_typeInt32, errors.New(getTipMessage(TipMessageDefine_UnknownFieldType, fileType))
 	}
+}
+
+//导出设置检查
+func checkExportTarget(exportTarget *ExportTarget, fieldTarget string) bool {
+	if fieldTarget == "" {
+		return true
+	}
+	// parser field target
+	targetList := strings.Split(fieldTarget, "|")
+	if len(targetList) == 0 {
+		return true
+	}
+	for _, target := range targetList {
+		if target == exportTarget.Name {
+			return true
+		}
+	}
+	return false
+}
+
+//检查引用
+func checkReference(content [][]string, provision *define.ConfigInfo) error {
+	errorStr := ""
+	for index, v := range provision.LineInfo {
+		if v.ReferenceTableName != "" {
+			// check this reference
+			fileName, fieldName, e := parserReferenceInfo(v.ReferenceTableName)
+			if e != nil {
+				errorStr += e.Error()
+				continue
+			}
+			for colIndex, lineContent := range content {
+				if index < 0 || index >= len(lineContent) {
+					errorStr += getTipMessage(TipMessageDefine_ReferenceCheckError, index, colIndex, getTipMessage(TipMessageDefine_ReferenceIndexerror))
+
+					continue
+				}
+				targetCell := lineContent[index]
+				err := checkIsTargetColHavValue(fileName, fieldName, targetCell)
+				if nil != err {
+					errorStr += getTipMessage(TipMessageDefine_ReferenceCheckError, index, colIndex, err.Error())
+					continue
+				}
+			}
+		}
+	}
+	return nil
+}
+func checkIsTargetColHavValue(fileName string, fieldName string, targetCell string) error {
+	//
+	targetCell = strings.TrimSpace(targetCell)
+	filePath := workSpace + "/" + fileName + ".xlsx"
+	content, provision, err := getConfigFileInfo(filePath, fileName)
+	if err != nil {
+		return err
+	}
+	targetColIndex := -1
+	for colIndex, fieldInfo := range provision.LineInfo {
+		if fieldInfo.FieldName == fieldName {
+			targetColIndex = colIndex
+			break
+		}
+	}
+	if targetColIndex == -1 {
+		return errors.New(getTipMessage(TipMessageDefine_ReferenceFieldNotFound, fieldName, fileName))
+	}
+
+	for _, lineContent := range content {
+		if targetColIndex < 0 || targetColIndex >= len(lineContent) {
+			return errors.New(getTipMessage(TipMessageDefine_ReferenceFieldNotFound, fieldName, fileName))
+		}
+		if strings.TrimSpace(lineContent[targetColIndex]) == targetCell {
+			return nil
+		}
+	}
+	return errors.New(getTipMessage(TipMessageDefine_ReferenceFieldNotFound, fieldName, fileName))
+}
+func parserReferenceInfo(info string) (configName string, fieldName string, err error) {
+	list := strings.Split(info, ":")
+	if len(list) != 2 {
+		return "", "", errors.New(getTipMessage(TipMessageDefine_ErrorOnParserReference, info))
+	}
+	return list[0], list[1], nil
+}
+
+//枚举检查
+func checkFieldIsInEnum(fieldType string) bool {
+	for _, enum := range currentConfigEnumInfoList {
+		if enum.Name == fieldType {
+			return true
+		}
+	}
+	return false
+}
+func checkFieldIsInEnumWithName(fieldType string) (bool, *config.ConfigEnumInfo) {
+	for _, enum := range currentConfigEnumInfoList {
+		if enum.Name == fieldType {
+			return true, enum
+		}
+	}
+	return false, nil
+}
+func checkFieldIsCorrectInEnum(fieldType string, value string) bool {
+	for _, enum := range currentConfigEnumInfoList {
+		if enum.Name == fieldType {
+			// begin check value
+			var tmpValue int32 = 0
+			err := common.Parser_int32(value, &tmpValue)
+			if nil != err {
+				return false
+			}
+			for _, enumElement := range enum.Value {
+				if enumElement.Value == tmpValue {
+					return true
+				}
+			}
+			return false
+		}
+	}
+	return false
+
 }
 func parserEnumList(enumList []string) ([]*config.ConfigEnumInfo, error) {
 
@@ -463,7 +436,7 @@ func parserEnumList(enumList []string) ([]*config.ConfigEnumInfo, error) {
 			return nil, err
 		}
 		if _, ok := keyNameMap[tmpElem.Name]; ok {
-			return nil, errors.New("error on parser enum ,name repeated " + tmpElem.Name)
+			return nil, errors.New(getTipMessage(TipMessageDefine_ErrorOnParserEnumRepeated, enum, tmpElem.Name))
 		}
 		keyNameMap[tmpElem.Name] = 1
 		result = append(result, tmpElem)
@@ -474,35 +447,35 @@ func parserEnumString(enum string) (*config.ConfigEnumInfo, error) {
 	// parser enum name
 	tmpStr := strings.Split(enum, ":")
 	if len(tmpStr) != 2 {
-		return nil, errors.New("error on parser enum " + enum)
+		return nil, errors.New(getTipMessage(TipMessageDefine_ErrorOnParserEnumFormateError, enum))
 	}
 	result := &config.ConfigEnumInfo{}
 	result.Name = tmpStr[0]
 	tmpStr = strings.Split(tmpStr[1], "|")
 	if len(tmpStr) <= 0 {
-		return nil, errors.New("error on parser enum values " + enum)
+		return nil, errors.New(getTipMessage(TipMessageDefine_ErrorOnParserEnumFormateError, enum))
 	}
 	var keyNameMap = map[string]int{}
 	for _, tmpElem := range tmpStr {
 		tmpCell := strings.Split(tmpElem, "=")
 		if len(tmpCell) != 2 {
-			return nil, errors.New("error on parser enum values " + enum + " at: " + tmpElem)
+			return nil, errors.New(getTipMessage(TipMessageDefine_ErrorOnParserEnumFormateError, enum))
 		}
 		// check value type
 		tmpCellEnum := &config.ConfigEnumElementInfo{}
 		tmpCellEnum.Name = tmpCell[0]
 		if tmpCellEnum.Name == "" || tmpCellEnum.Name == " " {
-			return nil, errors.New("error on parser enum values " + enum + " at: " + tmpElem + " key can't empty")
+			return nil, errors.New(getTipMessage(TipMessageDefine_ErrorOnParserEnumEmpty, enum, tmpElem))
 		}
 		if _, ok := keyNameMap[tmpCellEnum.Name]; ok {
-			return nil, errors.New("key repeated " + enum + " at: " + tmpCellEnum.Name)
+			return nil, errors.New(getTipMessage(TipMessageDefine_ErrorOnParserEnumRepeated, enum, tmpCellEnum.Name))
 		}
 
 		keyNameMap[tmpCellEnum.Name] = 1
 
 		err := common.Parser_int32(tmpCell[1], &tmpCellEnum.Value)
 		if nil != err {
-			return nil, errors.New("error on parser enum values " + enum + " at: " + tmpElem + " value must be int32 " + tmpCell[1])
+			return nil, errors.New(getTipMessage(TipMessageDefine_ErrorOnParserEnum, enum, tmpElem, tmpCell[1]))
 		}
 		result.Value = append(result.Value, tmpCellEnum)
 	}
@@ -523,6 +496,53 @@ func convertPbEnum(configName string, pbEnumInfo []*config.ConfigEnumInfo) []*En
 		result = append(result, elem)
 	}
 	return result
+}
+
+//执行导出
+func doExportFile(filePath string, outputPath string, exportTargetList []*ExportTarget, outputFileSuffix string) error {
+	currentConfigEnumInfoList = nil
+
+	// parser file name
+	fileName, _ := common.ParserFileNameByPath(filePath)
+
+	// load excel file & parser file header
+	content, provision, err := getConfigFileInfo(filePath, fileName)
+
+	// begin check provision
+	err = checkConfigProvisionCorrect(provision)
+	if err != nil {
+		return err
+	}
+
+	// begin check content
+	err = checkConfigContentCorrect(provision, content)
+	if nil != err {
+		return err
+	}
+
+	// begin export
+	for _, exportTarget := range exportTargetList {
+		tmpConfig, err := doExport(outputPath, provision, content, exportTarget)
+		if err != nil {
+			return errors.New(getTipMessage(TipMessageDefine_ExportWithError, exportTarget.Name, err.Error()))
+		}
+		byteContent, err := proto.Marshal(tmpConfig)
+
+		if err != nil {
+			return errors.New(getTipMessage(TipMessageDefine_ExportWithError, exportTarget.Name, err.Error()))
+		}
+
+		// ensure output path
+		common.EnsureFolder(outputPath)
+
+		// do export
+		common.WriteFileByName(outputPath+"/"+provision.TableName+outputFileSuffix, byteContent)
+	}
+
+	// begin check reference
+	err = checkReference(content, provision)
+
+	return nil
 }
 func doExport(outputPath string, provision *define.ConfigInfo, content [][]string, exportTarget *ExportTarget) (*config.ConfigTable, error) {
 	pbConfig := &config.ConfigTable{}
