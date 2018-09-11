@@ -4000,6 +4000,26 @@ public final class Config {
      */
     config.Config.ConfigLineOrBuilder getContentOrBuilder(
         int index);
+
+    /**
+     * <code>string packageName = 6;</code>
+     */
+    java.lang.String getPackageName();
+    /**
+     * <code>string packageName = 6;</code>
+     */
+    com.google.protobuf.ByteString
+        getPackageNameBytes();
+
+    /**
+     * <code>string configName = 7;</code>
+     */
+    java.lang.String getConfigName();
+    /**
+     * <code>string configName = 7;</code>
+     */
+    com.google.protobuf.ByteString
+        getConfigNameBytes();
   }
   /**
    * Protobuf type {@code config.ConfigTable}
@@ -4019,6 +4039,8 @@ public final class Config {
       fieldInfoList_ = java.util.Collections.emptyList();
       enumInfoList_ = java.util.Collections.emptyList();
       content_ = java.util.Collections.emptyList();
+      packageName_ = "";
+      configName_ = "";
     }
 
     @java.lang.Override
@@ -4086,6 +4108,18 @@ public final class Config {
               }
               content_.add(
                   input.readMessage(config.Config.ConfigLine.parser(), extensionRegistry));
+              break;
+            }
+            case 50: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              packageName_ = s;
+              break;
+            }
+            case 58: {
+              java.lang.String s = input.readStringRequireUtf8();
+
+              configName_ = s;
               break;
             }
           }
@@ -4277,6 +4311,74 @@ public final class Config {
       return content_.get(index);
     }
 
+    public static final int PACKAGENAME_FIELD_NUMBER = 6;
+    private volatile java.lang.Object packageName_;
+    /**
+     * <code>string packageName = 6;</code>
+     */
+    public java.lang.String getPackageName() {
+      java.lang.Object ref = packageName_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        packageName_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string packageName = 6;</code>
+     */
+    public com.google.protobuf.ByteString
+        getPackageNameBytes() {
+      java.lang.Object ref = packageName_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        packageName_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
+    public static final int CONFIGNAME_FIELD_NUMBER = 7;
+    private volatile java.lang.Object configName_;
+    /**
+     * <code>string configName = 7;</code>
+     */
+    public java.lang.String getConfigName() {
+      java.lang.Object ref = configName_;
+      if (ref instanceof java.lang.String) {
+        return (java.lang.String) ref;
+      } else {
+        com.google.protobuf.ByteString bs = 
+            (com.google.protobuf.ByteString) ref;
+        java.lang.String s = bs.toStringUtf8();
+        configName_ = s;
+        return s;
+      }
+    }
+    /**
+     * <code>string configName = 7;</code>
+     */
+    public com.google.protobuf.ByteString
+        getConfigNameBytes() {
+      java.lang.Object ref = configName_;
+      if (ref instanceof java.lang.String) {
+        com.google.protobuf.ByteString b = 
+            com.google.protobuf.ByteString.copyFromUtf8(
+                (java.lang.String) ref);
+        configName_ = b;
+        return b;
+      } else {
+        return (com.google.protobuf.ByteString) ref;
+      }
+    }
+
     private byte memoizedIsInitialized = -1;
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
@@ -4303,6 +4405,12 @@ public final class Config {
       }
       for (int i = 0; i < content_.size(); i++) {
         output.writeMessage(5, content_.get(i));
+      }
+      if (!getPackageNameBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 6, packageName_);
+      }
+      if (!getConfigNameBytes().isEmpty()) {
+        com.google.protobuf.GeneratedMessageV3.writeString(output, 7, configName_);
       }
       unknownFields.writeTo(output);
     }
@@ -4331,6 +4439,12 @@ public final class Config {
         size += com.google.protobuf.CodedOutputStream
           .computeMessageSize(5, content_.get(i));
       }
+      if (!getPackageNameBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(6, packageName_);
+      }
+      if (!getConfigNameBytes().isEmpty()) {
+        size += com.google.protobuf.GeneratedMessageV3.computeStringSize(7, configName_);
+      }
       size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
@@ -4356,6 +4470,10 @@ public final class Config {
           .equals(other.getEnumInfoListList());
       result = result && getContentList()
           .equals(other.getContentList());
+      result = result && getPackageName()
+          .equals(other.getPackageName());
+      result = result && getConfigName()
+          .equals(other.getConfigName());
       result = result && unknownFields.equals(other.unknownFields);
       return result;
     }
@@ -4383,6 +4501,10 @@ public final class Config {
         hash = (37 * hash) + CONTENT_FIELD_NUMBER;
         hash = (53 * hash) + getContentList().hashCode();
       }
+      hash = (37 * hash) + PACKAGENAME_FIELD_NUMBER;
+      hash = (53 * hash) + getPackageName().hashCode();
+      hash = (37 * hash) + CONFIGNAME_FIELD_NUMBER;
+      hash = (53 * hash) + getConfigName().hashCode();
       hash = (29 * hash) + unknownFields.hashCode();
       memoizedHashCode = hash;
       return hash;
@@ -4537,6 +4659,10 @@ public final class Config {
         } else {
           contentBuilder_.clear();
         }
+        packageName_ = "";
+
+        configName_ = "";
+
         return this;
       }
 
@@ -4590,6 +4716,8 @@ public final class Config {
         } else {
           result.content_ = contentBuilder_.build();
         }
+        result.packageName_ = packageName_;
+        result.configName_ = configName_;
         result.bitField0_ = to_bitField0_;
         onBuilt();
         return result;
@@ -4716,6 +4844,14 @@ public final class Config {
               contentBuilder_.addAllMessages(other.content_);
             }
           }
+        }
+        if (!other.getPackageName().isEmpty()) {
+          packageName_ = other.packageName_;
+          onChanged();
+        }
+        if (!other.getConfigName().isEmpty()) {
+          configName_ = other.configName_;
+          onChanged();
         }
         this.mergeUnknownFields(other.unknownFields);
         onChanged();
@@ -5577,6 +5713,144 @@ public final class Config {
         }
         return contentBuilder_;
       }
+
+      private java.lang.Object packageName_ = "";
+      /**
+       * <code>string packageName = 6;</code>
+       */
+      public java.lang.String getPackageName() {
+        java.lang.Object ref = packageName_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          packageName_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string packageName = 6;</code>
+       */
+      public com.google.protobuf.ByteString
+          getPackageNameBytes() {
+        java.lang.Object ref = packageName_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          packageName_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string packageName = 6;</code>
+       */
+      public Builder setPackageName(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        packageName_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string packageName = 6;</code>
+       */
+      public Builder clearPackageName() {
+        
+        packageName_ = getDefaultInstance().getPackageName();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string packageName = 6;</code>
+       */
+      public Builder setPackageNameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        packageName_ = value;
+        onChanged();
+        return this;
+      }
+
+      private java.lang.Object configName_ = "";
+      /**
+       * <code>string configName = 7;</code>
+       */
+      public java.lang.String getConfigName() {
+        java.lang.Object ref = configName_;
+        if (!(ref instanceof java.lang.String)) {
+          com.google.protobuf.ByteString bs =
+              (com.google.protobuf.ByteString) ref;
+          java.lang.String s = bs.toStringUtf8();
+          configName_ = s;
+          return s;
+        } else {
+          return (java.lang.String) ref;
+        }
+      }
+      /**
+       * <code>string configName = 7;</code>
+       */
+      public com.google.protobuf.ByteString
+          getConfigNameBytes() {
+        java.lang.Object ref = configName_;
+        if (ref instanceof String) {
+          com.google.protobuf.ByteString b = 
+              com.google.protobuf.ByteString.copyFromUtf8(
+                  (java.lang.String) ref);
+          configName_ = b;
+          return b;
+        } else {
+          return (com.google.protobuf.ByteString) ref;
+        }
+      }
+      /**
+       * <code>string configName = 7;</code>
+       */
+      public Builder setConfigName(
+          java.lang.String value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  
+        configName_ = value;
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string configName = 7;</code>
+       */
+      public Builder clearConfigName() {
+        
+        configName_ = getDefaultInstance().getConfigName();
+        onChanged();
+        return this;
+      }
+      /**
+       * <code>string configName = 7;</code>
+       */
+      public Builder setConfigNameBytes(
+          com.google.protobuf.ByteString value) {
+        if (value == null) {
+    throw new NullPointerException();
+  }
+  checkByteStringIsUtf8(value);
+        
+        configName_ = value;
+        onChanged();
+        return this;
+      }
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
         return super.setUnknownFieldsProto3(unknownFields);
@@ -5673,18 +5947,19 @@ public final class Config {
       "er\030\004 \001(\t\"4\n\025ConfigEnumElementInfo\022\014\n\004nam" +
       "e\030\001 \001(\t\022\r\n\005value\030\002 \001(\005\"L\n\016ConfigEnumInfo" +
       "\022\014\n\004name\030\001 \001(\t\022,\n\005value\030\002 \003(\0132\035.config.C" +
-      "onfigEnumElementInfo\"\310\001\n\013ConfigTable\022 \n\004" +
+      "onfigEnumElementInfo\"\361\001\n\013ConfigTable\022 \n\004" +
       "type\030\001 \001(\0162\022.config.ConfigType\022\024\n\014keyFie",
       "ldName\030\002 \001(\t\022.\n\rfieldInfoList\030\003 \003(\0132\027.co" +
       "nfig.ConfigFieldInfo\022,\n\014enumInfoList\030\004 \003" +
       "(\0132\026.config.ConfigEnumInfo\022#\n\007content\030\005 " +
-      "\003(\0132\022.config.ConfigLine*\247\001\n\tFieldType\022\r\n" +
-      "\ttypeInt32\020\000\022\r\n\ttypeInt64\020\001\022\017\n\013typeFloat" +
-      "32\020\002\022\017\n\013typeFloat64\020\003\022\014\n\010typeBool\020\004\022\016\n\nt" +
-      "ypeString\020\005\022\r\n\ttypeClass\020\006\022\014\n\010typeEnum\020\007" +
-      "\022\020\n\014typeDateTime\020\010\022\r\n\ttypeColor\020\t*\'\n\nCon" +
-      "figType\022\014\n\010typeList\020\000\022\013\n\007typeMap\020\001b\006prot" +
-      "o3"
+      "\003(\0132\022.config.ConfigLine\022\023\n\013packageName\030\006" +
+      " \001(\t\022\022\n\nconfigName\030\007 \001(\t*\247\001\n\tFieldType\022\r" +
+      "\n\ttypeInt32\020\000\022\r\n\ttypeInt64\020\001\022\017\n\013typeFloa" +
+      "t32\020\002\022\017\n\013typeFloat64\020\003\022\014\n\010typeBool\020\004\022\016\n\n" +
+      "typeString\020\005\022\r\n\ttypeClass\020\006\022\014\n\010typeEnum\020" +
+      "\007\022\020\n\014typeDateTime\020\010\022\r\n\ttypeColor\020\t*\'\n\nCo" +
+      "nfigType\022\014\n\010typeList\020\000\022\013\n\007typeMap\020\001b\006pro",
+      "to3"
     };
     com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
         new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
@@ -5733,7 +6008,7 @@ public final class Config {
     internal_static_config_ConfigTable_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
         internal_static_config_ConfigTable_descriptor,
-        new java.lang.String[] { "Type", "KeyFieldName", "FieldInfoList", "EnumInfoList", "Content", });
+        new java.lang.String[] { "Type", "KeyFieldName", "FieldInfoList", "EnumInfoList", "Content", "PackageName", "ConfigName", });
   }
 
   // @@protoc_insertion_point(outer_class_scope)
