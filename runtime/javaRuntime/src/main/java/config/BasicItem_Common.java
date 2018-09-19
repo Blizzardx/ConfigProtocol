@@ -9,12 +9,14 @@ enum BasicItem_CommonQuality
     blue(2),
     red(3),
     ;
-    private int index;
-    private BasicItem_CommonQuality(int i){
-        index = i;
+    private final int value;
+
+    private BasicItem_CommonQuality(int value) {
+        this.value = value;
     }
-    public int getIndex(){
-        return index;
+
+    public int getValue() {
+        return value;
     }
 }
 
