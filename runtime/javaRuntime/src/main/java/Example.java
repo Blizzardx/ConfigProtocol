@@ -2,10 +2,10 @@ import core.ConfigProtoSerializer;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
 
 public class Example {
     public static void main(String[] args){
-
         File file = new File("../../example/output/BasicItem_Common.bytes");
         Long filelength = file.length();
         FileInputStream in = null;
