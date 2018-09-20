@@ -10,12 +10,13 @@ import (
 
 func main() {
 	gen()
-	use()
+	//use()
 }
 func gen() {
 	var exportList []*exportTool.ExportTarget
 	exportList = append(exportList, &exportTool.ExportTarget{Name: "server", Lan: define.SupportLan_Go})
 	exportList = append(exportList, &exportTool.ExportTarget{Name: "client", Lan: define.SupportLan_Csharp})
+	exportList = append(exportList, &exportTool.ExportTarget{Name: "server", Lan: define.SupportLan_Java})
 
 	err := exportTool.ExportFile("config/BasicItem_Common.xlsx", "output", exportList, ".bytes")
 	fmt.Println(err)

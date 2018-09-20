@@ -6,7 +6,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 public class ConfigProtoSerializer {
-    public static void DeSerialize(byte[] content) throws Exception {
+    public static Object DeSerialize(byte[] content) throws Exception {
         config.Config.ConfigTable configContent = config.Config.ConfigTable.parseFrom(content);
 
         Class configType = null;
@@ -83,11 +83,11 @@ public class ConfigProtoSerializer {
                 }
             }
 
-
+            return configInstance;
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
+            return null;
         }
-        System.out.print(configInstance);
     }
     private static Object parserField(config.Config.ConfigTable configContent,Class fieldType,config.Config.ConfigFieldInfo fieldInfo,String cell,CommonError error){
         try {

@@ -17,7 +17,7 @@ const (
 )
 
 type BasicItem_Common struct {
-	Content map[int32]*BasicItem_CommonInfo
+	Content []*BasicItem_CommonInfo
 }
 type BasicItem_CommonInfo struct {
 	Id int32

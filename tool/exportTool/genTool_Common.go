@@ -23,6 +23,7 @@ type ConfigFieldDefine struct {
 	IsList bool
 }
 type EnumDefine struct {
+	PackageName  string
 	ConfigName   string
 	EnumName     string
 	EnumElemList []*EnumElemDefine

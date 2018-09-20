@@ -19,7 +19,7 @@ public class Example {
         }
 
         try {
-            ConfigProtoSerializer.DeSerialize(filecontent);
+            Object configContent = ConfigProtoSerializer.DeSerialize(filecontent);
         } catch (Exception e) {
             e.printStackTrace();
         }

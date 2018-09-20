@@ -91,12 +91,12 @@ func (self *genRuntimeCodeTool_Csharp) GenRuntimeCode(outputPath string, provisi
 
 	if provision.MapKeyType != "" {
 		provision.MapKeyType = self.convertToSelfType(provision.MapKeyType)
-		content, err = generateCode(codeTemplate_CsharpMap, provision, true)
+		content, err = generateCode(codeTemplate_CsharpMap, provision, false)
 		if err != nil {
 			return err
 		}
 	} else {
-		content, err = generateCode(codeTemplate_CsharpList, provision, true)
+		content, err = generateCode(codeTemplate_CsharpList, provision, false)
 		if err != nil {
 			return err
 		}
