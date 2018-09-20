@@ -21,7 +21,7 @@ namespace config
 
     public class BasicItem_Common
     {
-        public List<BasicItem_CommonInfo> Content;
+        public Dictionary<int, BasicItem_CommonInfo> Content;
     }
     public class BasicItem_CommonInfo
     {

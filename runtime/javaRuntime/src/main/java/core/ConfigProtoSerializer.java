@@ -23,11 +23,17 @@ public class ConfigProtoSerializer {
             configTableField.set(configInstance, configContentInstance);
 
             //get add method
+            boolean needCheckKey = false;
+            Object keyInstance = null;
+
             Method addMethod = null;
+            Method containsKeyMethod = null;
             if(configContent.getType() == Config.ConfigType.typeList){
                 addMethod = configTableField.getType().getMethod("add", Object.class);
             }else{
-                addMethod =  configTableField.getType().getMethod("put", String.class, String.class);
+                addMethod =  configTableField.getType().getMethod("put", Object.class, Object.class);
+                containsKeyMethod =  configTableField.getType().getMethod("containsKey", Object.class);
+                needCheckKey = true;
             }
 
             for(int row=0;row<configContent.getContentCount();++row){
@@ -53,13 +59,27 @@ public class ConfigProtoSerializer {
                         continue;
                     }
                     cellFieldElement.set(lineInstance, cellInstance);
+                    if(needCheckKey){
+                        if(configContent.getKeyFieldName().equals( fieldElem.getName())){
+                            keyInstance = cellInstance;
+                        }
+                    }
                 }
 
                 if(configContent.getType() == Config.ConfigType.typeList){
                     addMethod.invoke(configContentInstance,lineInstance);
 
                 }else{
-                    addMethod.invoke(configContentInstance,lineInstance);
+                    if(null == keyInstance){
+                        System.out.println("not found key of map " + configContent.getKeyFieldName() + " at row : " + row);
+                        continue;
+                    }
+                    Boolean isContains = (Boolean)containsKeyMethod.invoke(configContentInstance,keyInstance);
+                    if(isContains){
+                        System.out.println("key repeated " + configContent.getKeyFieldName() + " at row : " + row + keyInstance.toString());
+                        continue;
+                    }
+                    addMethod.invoke(configContentInstance,keyInstance,lineInstance);
                 }
             }
 
