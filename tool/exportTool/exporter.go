@@ -6,7 +6,6 @@ import (
 	"github.com/Blizzardx/ConfigProtocol/define"
 	"github.com/Blizzardx/ConfigProtocol/pbConfig"
 	"github.com/Blizzardx/ConfigProtocol/tool/excelHandler"
-	"github.com/golang/protobuf/proto"
 	"image/color"
 	"io/ioutil"
 	"log"
@@ -16,8 +15,9 @@ import (
 )
 
 type ExportTarget struct {
-	Name string
-	Lan  define.SupportLan
+	Name         string
+	Lan          define.SupportLan
+	OutPutSuffix string
 }
 type LoadedConfigInfo struct {
 	Content   [][]string
@@ -27,14 +27,18 @@ type ConfigRunTimeCodeGenerator interface {
 	GenRuntimeCode(outputPath string, provision *ConfigDefine, enumInfo []*EnumDefine) error
 	Name() define.SupportLan
 }
+type ConfigExportSerializer interface {
+	Export(configContent *config.ConfigTable) ([]byte, error)
+}
 
 var codeGenToolStore = map[define.SupportLan]ConfigRunTimeCodeGenerator{}
+var configSerializerStore = map[define.SupportLan]ConfigExportSerializer{}
 var currentConfigEnumInfoList []*config.ConfigEnumInfo
 var loadedConfigFileInfoStore = map[string]*LoadedConfigInfo{}
 var workSpace string = ""
 
 //导出所有文件，指定文件夹内的所有文件
-func ExportDirectory(directory string, outputPath string, exportTargetList []*ExportTarget, outputFileSuffix string) error {
+func ExportDirectory(directory string, outputPath string, exportTargetList []*ExportTarget) error {
 	loadedConfigFileInfoStore = map[string]*LoadedConfigInfo{}
 	files, err := ioutil.ReadDir(directory)
 	if err != nil {
@@ -48,7 +52,7 @@ func ExportDirectory(directory string, outputPath string, exportTargetList []*Ex
 		if file.IsDir() {
 			continue
 		}
-		err := doExportFile(directory+"/"+file.Name(), outputPath, exportTargetList, outputFileSuffix)
+		err := doExportFile(directory+"/"+file.Name(), outputPath, exportTargetList)
 		if err != nil {
 			errStr += err.Error()
 		}
@@ -60,12 +64,12 @@ func ExportDirectory(directory string, outputPath string, exportTargetList []*Ex
 }
 
 //导出单个文件
-func ExportFile(filePath string, outputPath string, exportTargetList []*ExportTarget, outputFileSuffix string) error {
+func ExportFile(filePath string, outputPath string, exportTargetList []*ExportTarget) error {
 	loadedConfigFileInfoStore = map[string]*LoadedConfigInfo{}
 
 	workSpace = common.ParserFileDirectoryByFullPath(filePath)
 
-	return doExportFile(filePath, outputPath, exportTargetList, outputFileSuffix)
+	return doExportFile(filePath, outputPath, exportTargetList)
 }
 
 //初始化
@@ -74,6 +78,12 @@ func init() {
 	codeGenToolStore[define.SupportLan_Go] = &genRuntimeCodeTool_Go{}
 	codeGenToolStore[define.SupportLan_Csharp] = &genRuntimeCodeTool_Csharp{}
 	codeGenToolStore[define.SupportLan_Java] = &genRuntimeCodeTool_Java{}
+
+	pbSerializer := &ConfigSerializer_Protobuf{}
+	configSerializerStore[define.SupportLan_Go] = pbSerializer
+	configSerializerStore[define.SupportLan_Csharp] = pbSerializer
+	configSerializerStore[define.SupportLan_Java] = pbSerializer
+	configSerializerStore[define.SupportLan_Json] = &ConfigSerializer_Json{}
 }
 
 //文件描述检查
@@ -499,7 +509,7 @@ func convertPbEnum(configName string, pbEnumInfo []*config.ConfigEnumInfo) []*En
 }
 
 //执行导出
-func doExportFile(filePath string, outputPath string, exportTargetList []*ExportTarget, outputFileSuffix string) error {
+func doExportFile(filePath string, outputPath string, exportTargetList []*ExportTarget) error {
 	currentConfigEnumInfoList = nil
 
 	// parser file name
@@ -522,21 +532,23 @@ func doExportFile(filePath string, outputPath string, exportTargetList []*Export
 
 	// begin export
 	for _, exportTarget := range exportTargetList {
-		tmpConfig, err := doExport(outputPath, provision, content, exportTarget)
-		if err != nil {
-			return errors.New(getTipMessage(TipMessageDefine_ExportWithError, exportTarget.Name, err.Error()))
-		}
-		byteContent, err := proto.Marshal(tmpConfig)
-
-		if err != nil {
-			return errors.New(getTipMessage(TipMessageDefine_ExportWithError, exportTarget.Name, err.Error()))
-		}
+		realOutputPath := outputPath + "/" + exportTarget.Name
 
 		// ensure output path
-		common.EnsureFolder(outputPath)
+		common.EnsureFolder(realOutputPath)
+
+		tmpConfig, err := doExport(realOutputPath, provision, content, exportTarget)
+		if err != nil {
+			return errors.New(getTipMessage(TipMessageDefine_ExportWithError, exportTarget.Name, err.Error()))
+		}
+
+		byteContent, err := configSerializerStore[exportTarget.Lan].Export(tmpConfig)
+		if err != nil {
+			return errors.New(getTipMessage(TipMessageDefine_ExportWithError, exportTarget.Name, err.Error()))
+		}
 
 		// do export
-		common.WriteFileByName(outputPath+"/"+provision.TableName+outputFileSuffix, byteContent)
+		common.WriteFileByName(realOutputPath+"/"+provision.TableName+exportTarget.OutPutSuffix, byteContent)
 	}
 
 	// begin check reference
@@ -615,9 +627,11 @@ func doExport(outputPath string, provision *define.ConfigInfo, content [][]strin
 		}
 	}
 	// gen runtime code
-	err := codeGenToolStore[exportTarget.Lan].GenRuntimeCode(outputPath, define, enumDefine)
-	if nil != err {
-		return nil, err
+	if genCodeTool, ok := codeGenToolStore[exportTarget.Lan]; ok {
+		err := genCodeTool.GenRuntimeCode(outputPath, define, enumDefine)
+		if nil != err {
+			return nil, err
+		}
 	}
 	return pbConfig, nil
 }

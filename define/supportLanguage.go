@@ -6,4 +6,7 @@ const (
 	SupportLan_Go SupportLan = iota
 	SupportLan_Csharp
 	SupportLan_Java
+	SupportLan_Js
+	SupportLan_Json
+	SupportLan_Xml
 )

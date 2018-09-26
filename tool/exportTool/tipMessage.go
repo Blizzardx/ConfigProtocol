@@ -23,6 +23,8 @@ const (
 	TipMessageDefine_ReferenceFieldNotFound
 	TipMessageDefine_ReferenceCheckError
 	TipMessageDefine_ReferenceIndexerror
+	TipMessageDefine_ErrorOnExportConfigToJsonKeyNotFound
+	TipMessageDefine_ErrorOnExportConfigParserError
 )
 
 func getTipMessage(msgType TipMessageDefine, args ...interface{}) string {
@@ -64,6 +66,10 @@ func getTipMessage(msgType TipMessageDefine, args ...interface{}) string {
 		res = "解析引用 时发生错误，在 {0}：行 {1}：列 ,错误内容: {2}"
 	case TipMessageDefine_ReferenceIndexerror:
 		res = "索引位置错误"
+	case TipMessageDefine_ErrorOnExportConfigToJsonKeyNotFound:
+		res = "导出json时发生错误 ，在 {0}：行  key {1} 没有找到"
+	case TipMessageDefine_ErrorOnExportConfigParserError:
+		res = "导出时发生错误 ，在 {0}：行 {1}：列 ,错误内容: {2}"
 	}
 	return common.StringFormate(res, args...)
 }
