@@ -10,7 +10,7 @@ import (
 
 func main() {
 	gen()
-	//use()
+	use()
 }
 func gen() {
 	var exportList []*exportTool.ExportTarget
@@ -24,7 +24,7 @@ func gen() {
 }
 func use() {
 	content := &config.BasicItem_Common{}
-	goRuntime.SetWorkspace("output")
+	goRuntime.SetWorkspace("output/server")
 	err := goRuntime.LoadConfig(content)
 	fmt.Println(err)
 	for _, v := range content.Content {

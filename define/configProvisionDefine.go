@@ -1,16 +1,16 @@
 package define
 
-type ConfigInfo struct {
+type ConfigProvisionInfo struct {
 	TableName  string
-	GlobalInfo *ConfigHeadInfo
-	LineInfo   []*ConfigFieldInfo
+	GlobalInfo *ConfigProvisionHeadInfo
+	LineInfo   []*ConfigProvisionFieldInfo
 }
-type ConfigHeadInfo struct {
+type ConfigProvisionHeadInfo struct {
 	TableType         string   `json:"type"` // list or map
 	TableKeyFieldName string   `json:"keyName"`
 	GlobalEnumDefine  []string `json:"enum"` //like quality:black=1|white=2|yellow=3
 }
-type ConfigFieldInfo struct {
+type ConfigProvisionFieldInfo struct {
 	FieldType               string `json:"type"`
 	FieldName               string `json:"name"`
 	FieldValueRangeLimitMin string `json:"min"`

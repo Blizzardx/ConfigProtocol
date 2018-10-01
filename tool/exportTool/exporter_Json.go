@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/Blizzardx/ConfigProtocol/common"
-	"github.com/Blizzardx/ConfigProtocol/pbConfig"
+	"github.com/Blizzardx/ConfigProtocol/define"
 	"strings"
 	"time"
 )
@@ -13,8 +13,8 @@ import (
 type ConfigSerializer_Json struct {
 }
 
-func (self *ConfigSerializer_Json) Export(configContent *config.ConfigTable) ([]byte, error) {
-	if configContent.Type == config.ConfigType_typeList {
+func (self *ConfigSerializer_Json) Export(configContent *define.ConfigTable) ([]byte, error) {
+	if configContent.Type == define.ConfigType_typeList {
 		// list
 		var jsonRoot []interface{}
 		for lineIndex, line := range configContent.Content {
@@ -39,7 +39,7 @@ func (self *ConfigSerializer_Json) Export(configContent *config.ConfigTable) ([]
 		return json.Marshal(jsonRoot)
 	}
 }
-func (self *ConfigSerializer_Json) exportLine(configContent *config.ConfigTable, configLineInfo *config.ConfigLine, lineIndex int) (interface{}, error) {
+func (self *ConfigSerializer_Json) exportLine(configContent *define.ConfigTable, configLineInfo *define.ConfigLine, lineIndex int) (interface{}, error) {
 	lineInfo := map[string]interface{}{}
 	for index, fieldInfo := range configContent.FieldInfoList {
 		cell := configLineInfo.Content[index]
@@ -52,7 +52,7 @@ func (self *ConfigSerializer_Json) exportLine(configContent *config.ConfigTable,
 	}
 	return lineInfo, nil
 }
-func (self *ConfigSerializer_Json) exportLineWithKey(configContent *config.ConfigTable, configLineInfo *config.ConfigLine, lineIndex int) (interface{}, interface{}, error) {
+func (self *ConfigSerializer_Json) exportLineWithKey(configContent *define.ConfigTable, configLineInfo *define.ConfigLine, lineIndex int) (interface{}, interface{}, error) {
 	lineInfo := map[string]interface{}{}
 	var keyInfo interface{} = nil
 
@@ -73,7 +73,7 @@ func (self *ConfigSerializer_Json) exportLineWithKey(configContent *config.Confi
 	}
 	return keyInfo, lineInfo, nil
 }
-func (self *ConfigSerializer_Json) parserCell(cellType config.FieldType, cellContent string, isList bool) (interface{}, error) {
+func (self *ConfigSerializer_Json) parserCell(cellType define.FieldType, cellContent string, isList bool) (interface{}, error) {
 	if isList {
 		var list []interface{}
 		listContent := strings.Split(cellContent, "|")
@@ -90,26 +90,26 @@ func (self *ConfigSerializer_Json) parserCell(cellType config.FieldType, cellCon
 	}
 }
 
-func (self *ConfigSerializer_Json) parserCellValue(cellType config.FieldType, cellContent string) (interface{}, error) {
+func (self *ConfigSerializer_Json) parserCellValue(cellType define.FieldType, cellContent string) (interface{}, error) {
 
 	switch cellType {
-	case config.FieldType_typeInt32:
+	case define.FieldType_typeInt32:
 		var value int32 = 0
 		err := common.Parser_int32(cellContent, &value)
 		return value, err
-	case config.FieldType_typeInt64:
+	case define.FieldType_typeInt64:
 		var value int64 = 0
 		err := common.Parser_int64(cellContent, &value)
 		return value, err
-	case config.FieldType_typeFloat32:
+	case define.FieldType_typeFloat32:
 		var value float32 = 0
 		err := common.Parser_float32(cellContent, &value)
 		return value, err
-	case config.FieldType_typeFloat64:
+	case define.FieldType_typeFloat64:
 		var value float64 = 0
 		err := common.Parser_float64(cellContent, &value)
 		return value, err
-	case config.FieldType_typeDateTime:
+	case define.FieldType_typeDateTime:
 		var value time.Time
 		err := common.Parser_dateTime(cellContent, &value)
 		return value.Unix(), err

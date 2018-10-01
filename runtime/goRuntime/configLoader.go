@@ -1,11 +1,11 @@
 package goRuntime
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/Blizzardx/ConfigProtocol/common"
-	"github.com/Blizzardx/ConfigProtocol/pbConfig"
-	"github.com/golang/protobuf/proto"
+	"github.com/Blizzardx/ConfigProtocol/define"
 	"image/color"
 	"reflect"
 	"strings"
@@ -36,8 +36,8 @@ func LoadConfig(configStruct interface{}) error {
 	if err != nil {
 		return err
 	}
-	pbConfig := &config.ConfigTable{}
-	err = proto.Unmarshal(byteContent, pbConfig)
+	pbConfig := &define.ConfigTable{}
+	err = json.Unmarshal(byteContent, pbConfig)
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func LoadConfig(configStruct interface{}) error {
 	configInstance := reflect.ValueOf(configStruct)
 
 	// check type
-	if pbConfig.Type == config.ConfigType_typeList {
+	if pbConfig.Type == define.ConfigType_typeList {
 		if tableFieldInfo.Type.Kind() != reflect.Slice {
 			return errors.New("error type")
 		}
@@ -68,8 +68,8 @@ func LoadConfigByContent(byteContent []byte, configStruct interface{}) error {
 	//parser class name to reflect config name
 	configType := reflect.TypeOf(configStruct)
 
-	pbConfig := &config.ConfigTable{}
-	err := proto.Unmarshal(byteContent, pbConfig)
+	pbConfig := &define.ConfigTable{}
+	err := json.Unmarshal(byteContent, pbConfig)
 	if err != nil {
 		return err
 	}
@@ -81,7 +81,7 @@ func LoadConfigByContent(byteContent []byte, configStruct interface{}) error {
 	configInstance := reflect.ValueOf(configStruct)
 
 	// check type
-	if pbConfig.Type == config.ConfigType_typeList {
+	if pbConfig.Type == define.ConfigType_typeList {
 		if tableFieldInfo.Type.Kind() != reflect.Slice {
 			return errors.New("error type")
 		}
@@ -95,7 +95,7 @@ func LoadConfigByContent(byteContent []byte, configStruct interface{}) error {
 
 	return nil
 }
-func parserList(configInstance reflect.Value, tableType reflect.Type, pbConfig *config.ConfigTable) reflect.Value {
+func parserList(configInstance reflect.Value, tableType reflect.Type, pbConfig *define.ConfigTable) reflect.Value {
 	configContentInstance := reflect.New(tableType.Field(0).Type).Elem()
 
 	lineDefineField := tableType.Field(0).Type.Elem().Elem()
@@ -109,7 +109,7 @@ func parserList(configInstance reflect.Value, tableType reflect.Type, pbConfig *
 	configInstance.Elem().Field(0).Set(configContentInstance)
 	return configInstance
 }
-func parserMap(configInstance reflect.Value, tableType reflect.Type, pbConfig *config.ConfigTable) reflect.Value {
+func parserMap(configInstance reflect.Value, tableType reflect.Type, pbConfig *define.ConfigTable) reflect.Value {
 	configContentInstance := reflect.MakeMap(tableType.Field(0).Type)
 
 	lineDefineField := tableType.Field(0).Type.Elem().Elem()
@@ -132,7 +132,7 @@ func parserMap(configInstance reflect.Value, tableType reflect.Type, pbConfig *c
 	configInstance.Elem().Field(0).Set(configContentInstance)
 	return configInstance
 }
-func parserLine(colIndex int, pbConfig *config.ConfigTable, lineDefineField reflect.Type, cell string, lineContentInstance reflect.Value) (isKey bool, keyValue reflect.Value) {
+func parserLine(colIndex int, pbConfig *define.ConfigTable, lineDefineField reflect.Type, cell string, lineContentInstance reflect.Value) (isKey bool, keyValue reflect.Value) {
 	isKey = false
 
 	var definedFiledInfo reflect.StructField
@@ -161,7 +161,7 @@ func parserLine(colIndex int, pbConfig *config.ConfigTable, lineDefineField refl
 			if err != nil {
 				continue
 			}
-			if fieldInfo.Type == config.FieldType_typeEnum {
+			if fieldInfo.Type == define.FieldType_typeEnum {
 				tmpCellInstance := reflect.New(listInstance.Type().Elem()).Elem()
 				tmpCellInstance.SetInt(int64(cellValue.(int32)))
 				listInstance = reflect.Append(listInstance, tmpCellInstance)
@@ -182,7 +182,7 @@ func parserLine(colIndex int, pbConfig *config.ConfigTable, lineDefineField refl
 			fmt.Println(err)
 			return
 		}
-		if fieldInfo.Type == config.FieldType_typeEnum {
+		if fieldInfo.Type == define.FieldType_typeEnum {
 			tmpCellInstance := reflect.New(lineContentInstance.Elem().FieldByName(definedFiledInfo.Name).Type()).Elem()
 			tmpCellInstance.SetInt(int64(cellValue.(int32)))
 			lineContentInstance.Elem().FieldByName(definedFiledInfo.Name).Set(tmpCellInstance)
@@ -198,42 +198,42 @@ func parserLine(colIndex int, pbConfig *config.ConfigTable, lineDefineField refl
 	}
 	return
 }
-func parserCell(cell string, pbType config.FieldType) (interface{}, error) {
+func parserCell(cell string, pbType define.FieldType) (interface{}, error) {
 	switch pbType {
 
-	case config.FieldType_typeInt32:
+	case define.FieldType_typeInt32:
 		var tmpValue int32
 		err := common.Parser_int32(cell, &tmpValue)
 		return tmpValue, err
-	case config.FieldType_typeInt64:
+	case define.FieldType_typeInt64:
 		var tmpValue int64
 		err := common.Parser_int64(cell, &tmpValue)
 		return tmpValue, err
-	case config.FieldType_typeFloat32:
+	case define.FieldType_typeFloat32:
 		var tmpValue float32
 		err := common.Parser_float32(cell, &tmpValue)
 		return tmpValue, err
-	case config.FieldType_typeFloat64:
+	case define.FieldType_typeFloat64:
 		var tmpValue float64
 		err := common.Parser_float64(cell, &tmpValue)
 		return tmpValue, err
-	case config.FieldType_typeBool:
+	case define.FieldType_typeBool:
 		var tmpValue bool
 		err := common.Parser_bool(cell, &tmpValue)
 		return tmpValue, err
-	case config.FieldType_typeString:
+	case define.FieldType_typeString:
 		var tmpValue string
 		err := common.Parser_string(cell, &tmpValue)
 		return tmpValue, err
-	case config.FieldType_typeEnum:
+	case define.FieldType_typeEnum:
 		var tmpValue int32
 		err := common.Parser_int32(cell, &tmpValue)
 		return tmpValue, err
-	case config.FieldType_typeDateTime:
+	case define.FieldType_typeDateTime:
 		var tmpValue time.Time
 		err := common.Parser_dateTime(cell, &tmpValue)
 		return tmpValue, err
-	case config.FieldType_typeColor:
+	case define.FieldType_typeColor:
 		var tmpValue color.RGBA
 		err := common.Parser_color(cell, &tmpValue)
 		return tmpValue, err
@@ -241,28 +241,28 @@ func parserCell(cell string, pbType config.FieldType) (interface{}, error) {
 	}
 	return 0, errors.New("unsupport type ")
 }
-func checkType(definedType reflect.Kind, pbType config.FieldType) bool {
+func checkType(definedType reflect.Kind, pbType define.FieldType) bool {
 	switch pbType {
 
-	case config.FieldType_typeInt32:
+	case define.FieldType_typeInt32:
 		return definedType == reflect.Int32
-	case config.FieldType_typeInt64:
+	case define.FieldType_typeInt64:
 		return definedType == reflect.Int64
-	case config.FieldType_typeFloat32:
+	case define.FieldType_typeFloat32:
 		return definedType == reflect.Float32
-	case config.FieldType_typeFloat64:
+	case define.FieldType_typeFloat64:
 		return definedType == reflect.Float64
-	case config.FieldType_typeBool:
+	case define.FieldType_typeBool:
 		return definedType == reflect.Bool
-	case config.FieldType_typeString:
+	case define.FieldType_typeString:
 		return definedType == reflect.String
-	case config.FieldType_typeClass:
+	case define.FieldType_typeClass:
 		return definedType == reflect.Struct
-	case config.FieldType_typeEnum:
+	case define.FieldType_typeEnum:
 		return definedType == reflect.Int32
-	case config.FieldType_typeDateTime:
+	case define.FieldType_typeDateTime:
 		return definedType == reflect.Struct
-	case config.FieldType_typeColor:
+	case define.FieldType_typeColor:
 		return definedType == reflect.Struct
 	}
 	return false

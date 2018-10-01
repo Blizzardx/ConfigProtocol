@@ -26,24 +26,24 @@ func ReadExcelFile(filePath string) ([][]string, error) {
 	return content, nil
 }
 
-func ParserExcelToConfigProvision(content [][]string, fileName string) (*define.ConfigInfo, error) {
+func ParserExcelToConfigProvision(content [][]string, fileName string) (*define.ConfigProvisionInfo, error) {
 	if len(content) < 2 {
 		return nil, errors.New("content error ")
 	}
 	// parser package name
-	provision := &define.ConfigInfo{TableName: fileName}
+	provision := &define.ConfigProvisionInfo{TableName: fileName}
 	// global define at [0][0] pos
 	if len(content[0]) < 1 {
 		return nil, errors.New("content length error at config " + fileName)
 	}
 	globalDefineStr := content[0][0]
-	provision.GlobalInfo = &define.ConfigHeadInfo{}
+	provision.GlobalInfo = &define.ConfigProvisionHeadInfo{}
 	err := json.Unmarshal([]byte(globalDefineStr), provision.GlobalInfo)
 	if nil != err {
 		return nil, errors.New("error on unmarshal global content ,it must be json " + globalDefineStr + " at config " + fileName)
 	}
 	for _, lineELem := range content[1] {
-		fieldInfo := &define.ConfigFieldInfo{}
+		fieldInfo := &define.ConfigProvisionFieldInfo{}
 		if lineELem != "" {
 			err := json.Unmarshal([]byte(lineELem), fieldInfo)
 			if nil != err {

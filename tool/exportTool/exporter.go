@@ -4,7 +4,6 @@ import (
 	"errors"
 	"github.com/Blizzardx/ConfigProtocol/common"
 	"github.com/Blizzardx/ConfigProtocol/define"
-	"github.com/Blizzardx/ConfigProtocol/pbConfig"
 	"github.com/Blizzardx/ConfigProtocol/tool/excelHandler"
 	"image/color"
 	"io/ioutil"
@@ -21,19 +20,19 @@ type ExportTarget struct {
 }
 type LoadedConfigInfo struct {
 	Content   [][]string
-	Provision *define.ConfigInfo
+	Provision *define.ConfigProvisionInfo
 }
 type ConfigRunTimeCodeGenerator interface {
 	GenRuntimeCode(outputPath string, provision *ConfigDefine, enumInfo []*EnumDefine) error
 	Name() define.SupportLan
 }
 type ConfigExportSerializer interface {
-	Export(configContent *config.ConfigTable) ([]byte, error)
+	Export(configContent *define.ConfigTable) ([]byte, error)
 }
 
 var codeGenToolStore = map[define.SupportLan]ConfigRunTimeCodeGenerator{}
 var configSerializerStore = map[define.SupportLan]ConfigExportSerializer{}
-var currentConfigEnumInfoList []*config.ConfigEnumInfo
+var currentConfigEnumInfoList []*define.ConfigEnumInfo
 var loadedConfigFileInfoStore = map[string]*LoadedConfigInfo{}
 var workSpace string = ""
 
@@ -79,15 +78,15 @@ func init() {
 	codeGenToolStore[define.SupportLan_Csharp] = &genRuntimeCodeTool_Csharp{}
 	codeGenToolStore[define.SupportLan_Java] = &genRuntimeCodeTool_Java{}
 
-	pbSerializer := &ConfigSerializer_Protobuf{}
-	configSerializerStore[define.SupportLan_Go] = pbSerializer
-	configSerializerStore[define.SupportLan_Csharp] = pbSerializer
-	configSerializerStore[define.SupportLan_Java] = pbSerializer
+	commonSerializer := &ConfigSerializer_Common{}
+	configSerializerStore[define.SupportLan_Go] = commonSerializer
+	configSerializerStore[define.SupportLan_Csharp] = commonSerializer
+	configSerializerStore[define.SupportLan_Java] = commonSerializer
 	configSerializerStore[define.SupportLan_Json] = &ConfigSerializer_Json{}
 }
 
 //文件描述检查
-func checkConfigProvisionCorrect(provision *define.ConfigInfo) error {
+func checkConfigProvisionCorrect(provision *define.ConfigProvisionInfo) error {
 	if provision.GlobalInfo.TableType != "list" && provision.GlobalInfo.TableType != "map" {
 		return errors.New(getTipMessage(TipMessageDefine_ErrorFieldType, provision.GlobalInfo.TableType))
 	}
@@ -138,7 +137,7 @@ func checkConfigProvisionCorrect(provision *define.ConfigInfo) error {
 }
 
 //文件内容检查
-func checkConfigContentCorrect(provision *define.ConfigInfo, content [][]string) error {
+func checkConfigContentCorrect(provision *define.ConfigProvisionInfo, content [][]string) error {
 	fixedContent := excelHandler.FixExcelFile(content)
 	for rowIndex, rowContent := range fixedContent {
 		for colIndex, contentCell := range rowContent {
@@ -182,7 +181,7 @@ func checkConfigContentCorrect(provision *define.ConfigInfo, content [][]string)
 }
 
 //属性检查
-func getConfigFileInfo(filePath string, fileName string) ([][]string, *define.ConfigInfo, error) {
+func getConfigFileInfo(filePath string, fileName string) ([][]string, *define.ConfigProvisionInfo, error) {
 	if v, ok := loadedConfigFileInfoStore[filePath]; ok {
 		if v.Provision != nil && v.Content != nil {
 			return v.Content, v.Provision, nil
@@ -212,7 +211,7 @@ func checkFieldTypeCorrect(fieldTypeStr string, content string, minValue string,
 		return err
 	}
 	switch fieldType {
-	case config.FieldType_typeInt32:
+	case define.FieldType_typeInt32:
 		var tmpValue int32 = 0
 		err := common.Parser_int32(content, &tmpValue)
 		if nil != err {
@@ -223,7 +222,7 @@ func checkFieldTypeCorrect(fieldTypeStr string, content string, minValue string,
 			return err
 		}
 		return nil
-	case config.FieldType_typeInt64:
+	case define.FieldType_typeInt64:
 		var tmpValue int64 = 0
 		err := common.Parser_int64(content, &tmpValue)
 		if nil != err {
@@ -234,7 +233,7 @@ func checkFieldTypeCorrect(fieldTypeStr string, content string, minValue string,
 			return err
 		}
 		return nil
-	case config.FieldType_typeFloat32:
+	case define.FieldType_typeFloat32:
 		var tmpValue float32 = 0
 		err := common.Parser_float32(content, &tmpValue)
 		if nil != err {
@@ -245,7 +244,7 @@ func checkFieldTypeCorrect(fieldTypeStr string, content string, minValue string,
 			return err
 		}
 		return nil
-	case config.FieldType_typeFloat64:
+	case define.FieldType_typeFloat64:
 		var tmpValue float64 = 0
 		err := common.Parser_float64(content, &tmpValue)
 		if nil != err {
@@ -256,21 +255,21 @@ func checkFieldTypeCorrect(fieldTypeStr string, content string, minValue string,
 			return err
 		}
 		return nil
-	case config.FieldType_typeBool:
+	case define.FieldType_typeBool:
 		var tmpValue bool = false
 		err := common.Parser_bool(content, &tmpValue)
 		if nil != err {
 			return err
 		}
 		return nil
-	case config.FieldType_typeString:
+	case define.FieldType_typeString:
 		var tmpValue string = ""
 		err := common.Parser_string(content, &tmpValue)
 		if nil != err {
 			return err
 		}
 		return nil
-	case config.FieldType_typeDateTime:
+	case define.FieldType_typeDateTime:
 		var tmpValue time.Time
 		err := common.Parser_dateTime(content, &tmpValue)
 		if nil != err {
@@ -281,7 +280,7 @@ func checkFieldTypeCorrect(fieldTypeStr string, content string, minValue string,
 			return err
 		}
 		return nil
-	case config.FieldType_typeColor:
+	case define.FieldType_typeColor:
 		var tmpValue color.RGBA
 		err := common.Parser_color(content, &tmpValue)
 		if nil != err {
@@ -291,28 +290,28 @@ func checkFieldTypeCorrect(fieldTypeStr string, content string, minValue string,
 	}
 	return errors.New(getTipMessage(TipMessageDefine_UnknownFieldType, fieldTypeStr))
 }
-func convertStrToFieldType(fileType string) (config.FieldType, error) {
+func convertStrToFieldType(fileType string) (define.FieldType, error) {
 	switch fileType {
 	case "int32":
-		return config.FieldType_typeInt32, nil
+		return define.FieldType_typeInt32, nil
 	case "int64":
-		return config.FieldType_typeInt64, nil
+		return define.FieldType_typeInt64, nil
 	case "float32":
-		return config.FieldType_typeFloat32, nil
+		return define.FieldType_typeFloat32, nil
 	case "float64":
-		return config.FieldType_typeFloat64, nil
+		return define.FieldType_typeFloat64, nil
 	case "bool":
-		return config.FieldType_typeBool, nil
+		return define.FieldType_typeBool, nil
 	case "string":
-		return config.FieldType_typeString, nil
+		return define.FieldType_typeString, nil
 	case "class":
-		return config.FieldType_typeClass, nil
+		return define.FieldType_typeClass, nil
 	case "time":
-		return config.FieldType_typeDateTime, nil
+		return define.FieldType_typeDateTime, nil
 	case "color":
-		return config.FieldType_typeColor, nil
+		return define.FieldType_typeColor, nil
 	default:
-		return config.FieldType_typeInt32, errors.New(getTipMessage(TipMessageDefine_UnknownFieldType, fileType))
+		return define.FieldType_typeInt32, errors.New(getTipMessage(TipMessageDefine_UnknownFieldType, fileType))
 	}
 }
 
@@ -335,7 +334,7 @@ func checkExportTarget(exportTarget *ExportTarget, fieldTarget string) bool {
 }
 
 //检查引用
-func checkReference(content [][]string, provision *define.ConfigInfo) error {
+func checkReference(content [][]string, provision *define.ConfigProvisionInfo) error {
 	errorStr := ""
 	for index, v := range provision.LineInfo {
 		if v.ReferenceTableName != "" {
@@ -408,7 +407,7 @@ func checkFieldIsInEnum(fieldType string) bool {
 	}
 	return false
 }
-func checkFieldIsInEnumWithName(fieldType string) (bool, *config.ConfigEnumInfo) {
+func checkFieldIsInEnumWithName(fieldType string) (bool, *define.ConfigEnumInfo) {
 	for _, enum := range currentConfigEnumInfoList {
 		if enum.Name == fieldType {
 			return true, enum
@@ -436,10 +435,10 @@ func checkFieldIsCorrectInEnum(fieldType string, value string) bool {
 	return false
 
 }
-func parserEnumList(enumList []string) ([]*config.ConfigEnumInfo, error) {
+func parserEnumList(enumList []string) ([]*define.ConfigEnumInfo, error) {
 
 	var keyNameMap = map[string]int{}
-	var result []*config.ConfigEnumInfo
+	var result []*define.ConfigEnumInfo
 	for _, enum := range enumList {
 		tmpElem, err := parserEnumString(enum)
 		if err != nil {
@@ -453,13 +452,13 @@ func parserEnumList(enumList []string) ([]*config.ConfigEnumInfo, error) {
 	}
 	return result, nil
 }
-func parserEnumString(enum string) (*config.ConfigEnumInfo, error) {
+func parserEnumString(enum string) (*define.ConfigEnumInfo, error) {
 	// parser enum name
 	tmpStr := strings.Split(enum, ":")
 	if len(tmpStr) != 2 {
 		return nil, errors.New(getTipMessage(TipMessageDefine_ErrorOnParserEnumFormateError, enum))
 	}
-	result := &config.ConfigEnumInfo{}
+	result := &define.ConfigEnumInfo{}
 	result.Name = tmpStr[0]
 	tmpStr = strings.Split(tmpStr[1], "|")
 	if len(tmpStr) <= 0 {
@@ -472,7 +471,7 @@ func parserEnumString(enum string) (*config.ConfigEnumInfo, error) {
 			return nil, errors.New(getTipMessage(TipMessageDefine_ErrorOnParserEnumFormateError, enum))
 		}
 		// check value type
-		tmpCellEnum := &config.ConfigEnumElementInfo{}
+		tmpCellEnum := &define.ConfigEnumElementInfo{}
 		tmpCellEnum.Name = tmpCell[0]
 		if tmpCellEnum.Name == "" || tmpCellEnum.Name == " " {
 			return nil, errors.New(getTipMessage(TipMessageDefine_ErrorOnParserEnumEmpty, enum, tmpElem))
@@ -491,7 +490,7 @@ func parserEnumString(enum string) (*config.ConfigEnumInfo, error) {
 	}
 	return result, nil
 }
-func convertPbEnum(configName string, pbEnumInfo []*config.ConfigEnumInfo) []*EnumDefine {
+func convertPbEnum(configName string, pbEnumInfo []*define.ConfigEnumInfo) []*EnumDefine {
 	var result []*EnumDefine
 	for _, pbEnum := range pbEnumInfo {
 		elem := &EnumDefine{ConfigName: configName, EnumName: pbEnum.Name}
@@ -556,17 +555,17 @@ func doExportFile(filePath string, outputPath string, exportTargetList []*Export
 
 	return nil
 }
-func doExport(outputPath string, provision *define.ConfigInfo, content [][]string, exportTarget *ExportTarget) (*config.ConfigTable, error) {
-	pbConfig := &config.ConfigTable{}
+func doExport(outputPath string, provision *define.ConfigProvisionInfo, content [][]string, exportTarget *ExportTarget) (*define.ConfigTable, error) {
+	pbConfig := &define.ConfigTable{}
 
 	pbConfig.ConfigName = provision.TableName
 	pbConfig.PackageName = "config"
 
 	if provision.GlobalInfo.TableType == "list" {
-		pbConfig.Type = config.ConfigType_typeList
+		pbConfig.Type = define.ConfigType_typeList
 
 	} else if provision.GlobalInfo.TableType == "map" {
-		pbConfig.Type = config.ConfigType_typeMap
+		pbConfig.Type = define.ConfigType_typeMap
 		pbConfig.KeyFieldName = provision.GlobalInfo.TableKeyFieldName
 	}
 
@@ -587,15 +586,15 @@ func doExport(outputPath string, provision *define.ConfigInfo, content [][]strin
 		if err != nil {
 			// check is enum
 			if ok, enumInfo := checkFieldIsInEnumWithName(field.FieldType); ok {
-				fieldType = config.FieldType_typeEnum
+				fieldType = define.FieldType_typeEnum
 				parameter = enumInfo.Name
 			}
 		}
-		pbConfig.FieldInfoList = append(pbConfig.FieldInfoList, &config.ConfigFieldInfo{Name: field.FieldName, Type: fieldType, IsList: field.IsList, Parameter: parameter})
+		pbConfig.FieldInfoList = append(pbConfig.FieldInfoList, &define.ConfigFieldInfo{Name: field.FieldName, Type: fieldType, IsList: field.IsList, Parameter: parameter})
 	}
 	fixedContent := excelHandler.FixExcelFile(content)
 	for _, rowContent := range fixedContent {
-		configLine := &config.ConfigLine{}
+		configLine := &define.ConfigLine{}
 		for colIndex, contentCell := range rowContent {
 			// check colIndex is in ignore list
 			if _, ok := ignoreColIndex[colIndex]; ok {
