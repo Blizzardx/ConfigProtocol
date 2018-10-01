@@ -1,20 +1,24 @@
 package core;
 
-import config.Config;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import core.define.*;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 public class ConfigProtoSerializer {
     public static Object DeSerialize(byte[] content) throws Exception {
-        config.Config.ConfigTable configContent = config.Config.ConfigTable.parseFrom(content);
-
+        core.define.ConfigTable configContent = null;
         Class configType = null;
         Class configLineType = null;
         Object configInstance = null;
 
         try {
-            configType = Class. forName(configContent.getPackageName()+"." + configContent.getConfigName());
+            ObjectMapper mapper = new ObjectMapper();
+            configContent = mapper.readValue(content, core.define.ConfigTable.class);
+
+            String tmpClassName = configContent.getPackageName()+"." + configContent.getConfigName();
+            configType = Class. forName(tmpClassName);
             configLineType = Class. forName(configContent.getPackageName()+"." + configContent.getConfigName()+"Info");
 
             configInstance = configType.newInstance();
@@ -28,7 +32,7 @@ public class ConfigProtoSerializer {
 
             Method addMethod = null;
             Method containsKeyMethod = null;
-            if(configContent.getType() == Config.ConfigType.typeList){
+            if(configContent.getType() == ConfigType.typeList){
                 addMethod = configTableField.getType().getMethod("add", Object.class);
             }else{
                 addMethod =  configTableField.getType().getMethod("put", Object.class, Object.class);
@@ -37,7 +41,7 @@ public class ConfigProtoSerializer {
             }
 
             for(int row=0;row<configContent.getContentCount();++row){
-                config.Config.ConfigLine rowContent = configContent.getContent(row);
+                core.define.ConfigLine rowContent = configContent.getContent(row);
                 Object lineInstance = configLineType.newInstance();
 
                 for(int col =0 ;col <rowContent.getContentCount();++col){
@@ -45,7 +49,7 @@ public class ConfigProtoSerializer {
                         System.out.println("col is out of range row: " + row + " col: " + col);
                         continue;
                     }
-                    config.Config.ConfigFieldInfo fieldElem = configContent.getFieldInfoList(col);
+                    core.define.ConfigFieldInfo fieldElem = configContent.getFieldInfoList(col);
                     CommonError errorMsg = new CommonError();
                     errorMsg.errorMsg = "";
                     Field cellFieldElement = lineInstance.getClass().getDeclaredField(fieldElem.getName());
@@ -66,7 +70,7 @@ public class ConfigProtoSerializer {
                     }
                 }
 
-                if(configContent.getType() == Config.ConfigType.typeList){
+                if(configContent.getType() == ConfigType.typeList){
                     addMethod.invoke(configContentInstance,lineInstance);
 
                 }else{
@@ -89,7 +93,7 @@ public class ConfigProtoSerializer {
             return null;
         }
     }
-    private static Object parserField(config.Config.ConfigTable configContent,Class fieldType,config.Config.ConfigFieldInfo fieldInfo,String cell,CommonError error){
+    private static Object parserField(core.define.ConfigTable configContent,Class fieldType,core.define.ConfigFieldInfo fieldInfo,String cell,CommonError error){
         try {
             if(fieldInfo.getIsList()){
                 Object cellInstance = fieldType.newInstance();
@@ -111,7 +115,7 @@ public class ConfigProtoSerializer {
             return null;
         }
     }
-    private static Object doParserCell(config.Config.ConfigTable configContent,String cell, config.Config.ConfigFieldInfo fieldInfo,CommonError errorMsg)
+    private static Object doParserCell(core.define.ConfigTable configContent,String cell, core.define.ConfigFieldInfo fieldInfo,CommonError errorMsg)
     {
         errorMsg.errorMsg = "";
         switch (fieldInfo.getType())

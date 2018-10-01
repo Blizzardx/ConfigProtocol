@@ -6,7 +6,7 @@ import java.io.FileInputStream;
 public class Example {
     public static void main(String[] args){
 
-        File file = new File("../../example/output/BasicItem_Common.bytes");
+        File file = new File("../../example/output/httpServer/BasicItem_Common.bytes");
         Long filelength = file.length();
         FileInputStream in = null;
         byte[] filecontent = new byte[filelength.intValue()];
@@ -20,6 +20,7 @@ public class Example {
 
         try {
             Object configContent = ConfigProtoSerializer.DeSerialize(filecontent);
+            System.out.println(configContent);
         } catch (Exception e) {
             e.printStackTrace();
         }
