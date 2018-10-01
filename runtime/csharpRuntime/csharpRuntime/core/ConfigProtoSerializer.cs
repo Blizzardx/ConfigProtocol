@@ -1,21 +1,19 @@
 ﻿using System;
 using System.Reflection;
 using define;
-using LitJson;
 
 namespace ConfigProto.core
 {
     public class ConfigProtoSerializer
     {
-        public static Object DeSerialize(byte[] configContent, out string error)
+        public static T DeSerialize<T>(IJsonSerializer jsonSerializer,byte[] configContent, out string error) where T : class
         {
             error = "";
             define.ConfigTable config = null;
 
             try
             {
-                string str = System.Text.Encoding.UTF8.GetString(configContent);
-                config = JsonMapper.ToObject<ConfigTable>(str);
+                config = jsonSerializer.DeSerialize<ConfigTable>(configContent);
             }
             catch (Exception e)
             {
@@ -53,7 +51,7 @@ namespace ConfigProto.core
             {
                 Logger.Instance.LogError(error);
             }
-            return configInstance;
+            return configInstance as T;
         }
 
         #region parser list

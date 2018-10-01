@@ -49,6 +49,7 @@
     <Compile Include="core\Color.cs" />
     <Compile Include="core\ConfigProtoSerializer.cs" />
     <Compile Include="core\config\Config.cs" />
+    <Compile Include="core\IJsonSerializer.cs" />
     <Compile Include="core\ILoger.cs" />
     <Compile Include="core\ParserTool.cs" />
     <Compile Include="core\ReflectionManager.cs" />
