@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
-using Config;
-using Google.Protobuf;
+using define;
+using LitJson;
 
 namespace ConfigProto.core
 {
@@ -10,11 +10,12 @@ namespace ConfigProto.core
         public static Object DeSerialize(byte[] configContent, out string error)
         {
             error = "";
-            Config.ConfigTable config = new ConfigTable();
+            define.ConfigTable config = null;
 
             try
             {
-                config.MergeFrom(configContent);
+                string str = System.Text.Encoding.UTF8.GetString(configContent);
+                config = JsonMapper.ToObject<ConfigTable>(str);
             }
             catch (Exception e)
             {

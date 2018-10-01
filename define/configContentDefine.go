@@ -23,29 +23,29 @@ const (
 )
 
 type ConfigFieldInfo struct {
-	Name      string    `json:"name,omitempty"`
-	Type      FieldType `json:"type,omitempty"`
-	IsList    bool      `json:"isList,omitempty"`
-	Parameter string    `json:"parameter,omitempty"`
+	Name      string    `json:"Name,omitempty"`
+	Type      FieldType `json:"Type,omitempty"`
+	IsList    bool      `json:"IsList,omitempty"`
+	Parameter string    `json:"Parameter,omitempty"`
 }
 type ConfigEnumElementInfo struct {
-	Name  string `json:"name,omitempty"`
-	Value int32  `json:"value,omitempty"`
+	Name  string `json:"Name,omitempty"`
+	Value int32  `json:"Value,omitempty"`
 }
 type ConfigEnumInfo struct {
-	Name  string                   `json:"name,omitempty"`
-	Value []*ConfigEnumElementInfo `json:"value,omitempty"`
+	Name  string                   `json:"Name,omitempty"`
+	Value []*ConfigEnumElementInfo `json:"Value,omitempty"`
 }
 
 type ConfigLine struct {
-	Content []string `json:"content,omitempty"`
+	Content []string `json:"Content,omitempty"`
 }
 type ConfigTable struct {
-	PackageName   string             `json:"packageName,omitempty"`
-	ConfigName    string             `json:"configName,omitempty"`
-	Type          ConfigType         `json:"type,omitempty"`
-	KeyFieldName  string             `json:"keyFieldName,omitempty"`
-	FieldInfoList []*ConfigFieldInfo `json:"fieldInfoList,omitempty"`
-	EnumInfoList  []*ConfigEnumInfo  `json:"enumInfoList,omitempty"`
-	Content       []*ConfigLine      `json:"content,omitempty"`
+	PackageName   string             `json:"PackageName,omitempty"`
+	ConfigName    string             `json:"ConfigName,omitempty"`
+	Type          ConfigType         `json:"Type,omitempty"`
+	KeyFieldName  string             `json:"KeyFieldName,omitempty"`
+	FieldInfoList []*ConfigFieldInfo `json:"FieldInfoList,omitempty"`
+	EnumInfoList  []*ConfigEnumInfo  `json:"EnumInfoList,omitempty"`
+	Content       []*ConfigLine      `json:"Content,omitempty"`
 }
