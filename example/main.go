@@ -19,7 +19,8 @@ func gen() {
 	exportList = append(exportList, &exportTool.ExportTarget{Name: "httpServer", Lan: define.SupportLan_Java, OutPutSuffix: ".bytes"})
 	exportList = append(exportList, &exportTool.ExportTarget{Name: "cocosClient", Lan: define.SupportLan_Json, OutPutSuffix: ".json"})
 
-	err := exportTool.ExportFile("config/BasicItem_Common.xlsx", "output", exportList)
+	//err := exportTool.ExportFile("config/BasicItem_Common.xlsx", "output", exportList)
+	err := exportTool.ExportDirectory("config", "output", exportList)
 	fmt.Println(err)
 }
 func use() {

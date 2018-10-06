@@ -53,7 +53,7 @@ func ExportDirectory(directory string, outputPath string, exportTargetList []*Ex
 		}
 		err := doExportFile(directory+"/"+file.Name(), outputPath, exportTargetList)
 		if err != nil {
-			errStr += err.Error()
+			errStr += directory + "/" + file.Name() + " : " + err.Error()
 		}
 	}
 	if errStr == "" {
@@ -68,7 +68,11 @@ func ExportFile(filePath string, outputPath string, exportTargetList []*ExportTa
 
 	workSpace = common.ParserFileDirectoryByFullPath(filePath)
 
-	return doExportFile(filePath, outputPath, exportTargetList)
+	err := doExportFile(filePath, outputPath, exportTargetList)
+	if nil != err {
+		return errors.New(filePath + " : " + err.Error())
+	}
+	return nil
 }
 
 //初始化
@@ -516,6 +520,10 @@ func doExportFile(filePath string, outputPath string, exportTargetList []*Export
 
 	// load excel file & parser file header
 	content, provision, err := getConfigFileInfo(filePath, fileName)
+
+	if err != nil {
+		return err
+	}
 
 	// begin check provision
 	err = checkConfigProvisionCorrect(provision)
