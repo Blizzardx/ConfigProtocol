@@ -2,6 +2,7 @@ export GOARCH=amd64
 export GOOS=linux
 
 export CURR=`pwd`
+
 cd ../../../../../..
 
 export GOPATH=`pwd`
@@ -13,4 +14,4 @@ echo "GOROOT : $GOROOT"
 echo "GOARCH : $GOARCH"
 echo "GOOS : $GOOS"
 
-go build -o ../windows/configProtoTool.exe github.com/Blizzardx/ConfigProtocol/release
+go build -o ../linux/configProtoTool github.com/Blizzardx/ConfigProtocol/release
