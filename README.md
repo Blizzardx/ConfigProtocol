@@ -1,4 +1,5 @@
 # ConfigProtocol
+依赖库：https://github.com/360EntSecGroup-Skylar/excelize
 
 用途描述
 本库用来定义 配置文件协议，通过定义好的excel文件的文件头，来生成对应的装载类。同时提供了运行的的自动装载和非运行时的生成工具支持
