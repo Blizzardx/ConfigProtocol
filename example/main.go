@@ -14,10 +14,10 @@ func main() {
 }
 func gen() {
 	var exportList []*exportTool.ExportTarget
-	exportList = append(exportList, &exportTool.ExportTarget{Name: "server", Lan: define.SupportLan_Go, OutPutSuffix: ".bytes"})
-	exportList = append(exportList, &exportTool.ExportTarget{Name: "client", Lan: define.SupportLan_Csharp, OutPutSuffix: ".bytes"})
-	exportList = append(exportList, &exportTool.ExportTarget{Name: "httpServer", Lan: define.SupportLan_Java, OutPutSuffix: ".bytes"})
-	exportList = append(exportList, &exportTool.ExportTarget{Name: "cocosClient", Lan: define.SupportLan_Json, OutPutSuffix: ".json"})
+	exportList = append(exportList, &exportTool.ExportTarget{Name: "server", Lan: define.SupportLan_Go, OutPutSuffix: ".bytes", PackageName: "config"})
+	exportList = append(exportList, &exportTool.ExportTarget{Name: "client", Lan: define.SupportLan_Csharp, OutPutSuffix: ".bytes", PackageName: "config"})
+	exportList = append(exportList, &exportTool.ExportTarget{Name: "httpServer", Lan: define.SupportLan_Java, OutPutSuffix: ".bytes", PackageName: "config"})
+	exportList = append(exportList, &exportTool.ExportTarget{Name: "cocosClient", Lan: define.SupportLan_Json, OutPutSuffix: ".json", PackageName: "config"})
 
 	//err := exportTool.ExportFile("config/BasicItem_Common.xlsx", "output", exportList)
 	err := exportTool.ExportDirectory("config", "output", exportList)

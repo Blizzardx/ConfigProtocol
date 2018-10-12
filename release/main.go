@@ -12,6 +12,7 @@ type ExportTargetConfig struct {
 	Name         string            `json:"Name"`
 	Lan          define.SupportLan `json:"Lan"`
 	OutPutSuffix string            `json:"OutPutSuffix"`
+	PackageName  string            `json:"PackageName"`
 }
 type ExportConfig struct {
 	LanDefine    string                `json:"LanDefine"`
@@ -42,6 +43,7 @@ func main() {
 			Name:         exportTarget.Name,
 			Lan:          exportTarget.Lan,
 			OutPutSuffix: exportTarget.OutPutSuffix,
+			PackageName:  exportTarget.PackageName,
 		})
 	}
 
@@ -58,10 +60,10 @@ func createSample() {
 		OutputDir: "output",
 		LanDefine: fmt.Sprint("Go:", define.SupportLan_Go, " C#:", define.SupportLan_Csharp, " Java:", define.SupportLan_Java, " Json:", define.SupportLan_Json),
 	}
-	configInfo.ExportTarget = append(configInfo.ExportTarget, &ExportTargetConfig{Name: "server", Lan: define.SupportLan_Go, OutPutSuffix: ".bytes"})
-	configInfo.ExportTarget = append(configInfo.ExportTarget, &ExportTargetConfig{Name: "client", Lan: define.SupportLan_Csharp, OutPutSuffix: ".bytes"})
-	configInfo.ExportTarget = append(configInfo.ExportTarget, &ExportTargetConfig{Name: "httpServer", Lan: define.SupportLan_Java, OutPutSuffix: ".bytes"})
-	configInfo.ExportTarget = append(configInfo.ExportTarget, &ExportTargetConfig{Name: "cocosClient", Lan: define.SupportLan_Json, OutPutSuffix: ".json"})
+	configInfo.ExportTarget = append(configInfo.ExportTarget, &ExportTargetConfig{Name: "server", Lan: define.SupportLan_Go, OutPutSuffix: ".bytes", PackageName: "config"})
+	configInfo.ExportTarget = append(configInfo.ExportTarget, &ExportTargetConfig{Name: "client", Lan: define.SupportLan_Csharp, OutPutSuffix: ".bytes", PackageName: "config"})
+	configInfo.ExportTarget = append(configInfo.ExportTarget, &ExportTargetConfig{Name: "httpServer", Lan: define.SupportLan_Java, OutPutSuffix: ".bytes", PackageName: "config"})
+	configInfo.ExportTarget = append(configInfo.ExportTarget, &ExportTargetConfig{Name: "cocosClient", Lan: define.SupportLan_Json, OutPutSuffix: ".json", PackageName: "config"})
 
 	configContent, err := json.Marshal(configInfo)
 	if nil != err {

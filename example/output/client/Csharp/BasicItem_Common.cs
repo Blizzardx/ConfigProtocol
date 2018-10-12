@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System;
 using ConfigProto.core;
 
-namespace config
+namespace auto
 {
 
     public enum BasicItem_CommonQuality

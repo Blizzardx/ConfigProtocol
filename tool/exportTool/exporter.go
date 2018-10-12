@@ -17,6 +17,7 @@ type ExportTarget struct {
 	Name         string
 	Lan          define.SupportLan
 	OutPutSuffix string
+	PackageName  string
 }
 type LoadedConfigInfo struct {
 	Content   [][]string
@@ -617,7 +618,10 @@ func doExport(outputPath string, provision *define.ConfigProvisionInfo, content 
 
 	enumDefine := convertPbEnum(provision.TableName, currentConfigEnumInfoList)
 
-	define := &ConfigDefine{PackageName: "config", ConfigName: provision.TableName}
+	if exportTarget.PackageName == "" {
+		exportTarget.PackageName = "config"
+	}
+	define := &ConfigDefine{PackageName: exportTarget.PackageName, ConfigName: provision.TableName}
 	for index, field := range provision.LineInfo {
 		if _, ok := ignoreColIndex[index]; ok {
 			continue
