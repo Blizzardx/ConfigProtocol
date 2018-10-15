@@ -13,11 +13,15 @@ import (
 )
 
 var workspace = ""
+var currentConfigSuffix = ".json"
 
 func SetWorkspace(workspacePath string) {
 	workspace = workspacePath
 }
-func LoadConfig(configStruct interface{}, configSuffix string) error {
+func SetSuffix(configSuffix string) {
+	currentConfigSuffix = configSuffix
+}
+func LoadConfig(configStruct interface{}) error {
 	//parser class name to reflect config name
 	configType := reflect.TypeOf(configStruct)
 
@@ -32,7 +36,7 @@ func LoadConfig(configStruct interface{}, configSuffix string) error {
 
 	structName := configType.Name()
 	// load config by name
-	byteContent, err := common.LoadFileByName(workspace + "/" + structName + configSuffix)
+	byteContent, err := common.LoadFileByName(workspace + "/" + structName + currentConfigSuffix)
 	if err != nil {
 		return err
 	}
