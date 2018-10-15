@@ -10,6 +10,15 @@ import (
 	"strings"
 )
 
+func GetCurrentPath() string {
+	pwd, err := os.Getwd()
+	if err != nil {
+		fmt.Println(err)
+	}
+	fmt.Println(pwd)
+	return pwd
+}
+
 func LoadFileByName(filePath string) ([]byte, error) {
 	file, err := os.Open(filePath) // For read access.
 	if err != nil {
@@ -120,6 +129,9 @@ func ParserFileNameByPath(fullpath string) (name string, suffix string) {
 	}
 
 	return
+}
+func FormatePath(path string) string {
+	return strings.Replace(path, "\\", "/", -1)
 }
 func StringFormate(content string, args ...interface{}) string {
 	for i := 0; i < len(args); i++ {
