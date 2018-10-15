@@ -17,7 +17,7 @@ var workspace = ""
 func SetWorkspace(workspacePath string) {
 	workspace = workspacePath
 }
-func LoadConfig(configStruct interface{}) error {
+func LoadConfig(configStruct interface{}, configSuffix string) error {
 	//parser class name to reflect config name
 	configType := reflect.TypeOf(configStruct)
 
@@ -32,7 +32,7 @@ func LoadConfig(configStruct interface{}) error {
 
 	structName := configType.Name()
 	// load config by name
-	byteContent, err := common.LoadFileByName(workspace + "/" + structName + ".json")
+	byteContent, err := common.LoadFileByName(workspace + "/" + structName + configSuffix)
 	if err != nil {
 		return err
 	}

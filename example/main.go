@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"github.com/Blizzardx/ConfigProtocol/common"
 	"github.com/Blizzardx/ConfigProtocol/define"
 	"github.com/Blizzardx/ConfigProtocol/example/output/server/Go"
 	"github.com/Blizzardx/ConfigProtocol/runtime/goRuntime"
@@ -25,8 +26,12 @@ func gen() {
 }
 func use() {
 	content := &config.BasicItem_Common{}
-	goRuntime.SetWorkspace("output/server")
-	err := goRuntime.LoadConfig(content)
+	byteContent, err := common.LoadFileByName("output/server/BasicItem_Common.bytes")
+	if err != nil {
+		return
+	}
+	//goRuntime.SetWorkspace("output/server")
+	err = goRuntime.LoadConfigByContent(byteContent, content)
 	fmt.Println(err)
 	for _, v := range content.Content {
 		//fmt.Printf("%v", v)
