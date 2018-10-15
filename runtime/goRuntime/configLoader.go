@@ -32,7 +32,7 @@ func LoadConfig(configStruct interface{}) error {
 
 	structName := configType.Name()
 	// load config by name
-	byteContent, err := common.LoadFileByName(workspace + "/" + structName + ".bytes")
+	byteContent, err := common.LoadFileByName(workspace + "/" + structName + ".json")
 	if err != nil {
 		return err
 	}
@@ -64,9 +64,17 @@ func LoadConfig(configStruct interface{}) error {
 	return nil
 }
 func LoadConfigByContent(byteContent []byte, configStruct interface{}) error {
-
 	//parser class name to reflect config name
 	configType := reflect.TypeOf(configStruct)
+
+	if configType.Kind() != reflect.Ptr {
+		return errors.New("error type")
+	}
+
+	configType = configType.Elem()
+	if configType.Kind() != reflect.Struct {
+		return errors.New("error type")
+	}
 
 	pbConfig := &define.ConfigTable{}
 	err := json.Unmarshal(byteContent, pbConfig)
