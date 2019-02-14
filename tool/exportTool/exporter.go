@@ -545,6 +545,13 @@ func doExportFile(filePath string, outputPath string, exportTargetList []*Export
 		// ensure output path
 		common.EnsureFolder(realOutputPath)
 
+		// check is need export at this target
+
+		if !checkExportTarget(exportTarget, provision.GlobalInfo.ExportTarget) {
+			//
+			continue
+		}
+
 		tmpConfig, err := doExport(realOutputPath, provision, content, exportTarget)
 		if err != nil {
 			return errors.New(getTipMessage(TipMessageDefine_ExportWithError, exportTarget.Name, err.Error()))

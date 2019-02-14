@@ -8,7 +8,8 @@ type ConfigProvisionInfo struct {
 type ConfigProvisionHeadInfo struct {
 	TableType         string   `json:"type"` // list or map
 	TableKeyFieldName string   `json:"keyName"`
-	GlobalEnumDefine  []string `json:"enum"` //like quality:black=1|white=2|yellow=3
+	GlobalEnumDefine  []string `json:"enum"`     //like quality:black=1|white=2|yellow=3
+	ExportTarget      string   `json:"exTarget"` // split by '|' like 'client|server|serverTool', 'client' ,'server' ,''(empty) mean's all target
 }
 type ConfigProvisionFieldInfo struct {
 	FieldType               string `json:"type"`
